@@ -2,7 +2,12 @@
 # main 保持与上游一致（只多本 workflow 文件，路径上游不会用，merge 永不冲突）；
 # pages-deploy 为自动生成的部署分支：替换站点域名为本 fork 的 Pages 地址后强推，
 # GitHub Pages（legacy，源分支 pages-deploy）会在推送后自动重新构建发布。
-# 上游的「电子书」workflow 仍会在 main 内容变化时自动发布 EPUB/PDF 到本 fork 的 Release。
+# cloudflare-deploy 同理：替换站点域名为 howtolivebetter.favorhub.top、仓库和
+# README 链接为本 fork 的，由 Cloudflare Pages 连接该分支自动发布；
+# issue、Star History 等指向上游出处的链接保留不动。
+# 「电子书」workflow（book.yml）不会因同步的 push 触发（GITHUB_TOKEN 的 push
+# 不触发其他 workflow，GitHub 防递归），本 workflow 在 main 有内容变化时手动
+# dispatch 一次，保持 Release 电子书最新。
 name: Sync upstream
 
 on:
@@ -12,6 +17,7 @@ on:
 
 permissions:
   contents: write
+  actions: write
 
 concurrency:
   group: sync-upstream
@@ -32,22 +38,62 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git remote add upstream https://github.com/eternity4719/HowToLiveBetter.git
           git fetch upstream main
+          before=$(git rev-parse HEAD)
           git merge upstream/main --no-edit
           git push origin main
+          if [ "$(git rev-parse HEAD)" != "$before" ]; then
+            echo "MAIN_CHANGED=true" >> "$GITHUB_ENV"
+          fi
 
+      # 内容没变就不提交不推送。原写法 git diff --cached 比较的是改写结果对 main，
+      # 而改写结果对 main 永远有差异，定时任务会每 10 分钟强推一个同内容提交；
+      # 改成比较改写后 tree 的哈希，跟远端分支一致就跳过。
       - name: Build pages-deploy branch
         run: |
-          git checkout -B pages-deploy
+          git checkout -B pages-deploy main
           grep -rl 'eternity4719\.github\.io/HowToLiveBetter' \
-            --include='*.html' --include='*.xml' --include='*.txt' . \
+            --exclude-dir=.git \
+            --include='*.html' --include='*.xml' --include='*.txt' --include='*.md' . \
             | xargs -r perl -pi -e 's{https://eternity4719\.github\.io/HowToLiveBetter}{https://favorpan.github.io/HowToLiveBetter}g'
           git add -A
-          if git diff --cached --quiet; then
-            echo "站点文件无变化，跳过提交"
+          tree=$(git write-tree)
+          remote=$(git rev-parse --verify 'origin/pages-deploy^{tree}' 2>/dev/null || echo none)
+          if [ "$tree" = "$remote" ]; then
+            echo "站点文件无变化，跳过推送"
           else
             git commit -m "chore: rewrite site URLs for fork Pages deploy [skip ci]"
+            git push origin pages-deploy --force
           fi
-          git push origin pages-deploy --force
+
+      # 同上，但目标是 Cloudflare Pages：站点域名、GitHub 仓库和 README 链接都
+      # 改到本 fork；issue、Star History 等上游出处保留。扫描用宽词 eternity4719
+      # （github.io 域名里没有紧跟斜杠，窄词选不中 sitemap.xml 和 robots.txt），
+      # 不放心的改写都做了护栏：issues/pull/commit/discussions 不改，.yml 和
+      # LICENSE、构建脚本不在扫描范围。
+      - name: Build cloudflare-deploy branch
+        run: |
+          git checkout -B cloudflare-deploy main
+          grep -rl 'eternity4719' \
+            --exclude-dir=.git \
+            --include='*.html' --include='*.xml' --include='*.txt' --include='*.md' . \
+            | xargs -r perl -pi -e 's{https://eternity4719\.github\.io/HowToLiveBetter}{https://howtolivebetter.favorhub.top}g; s{raw\.githubusercontent\.com/eternity4719/HowToLiveBetter}{raw.githubusercontent.com/FavorPan/HowToLiveBetter}g; s{github\.com/eternity4719/HowToLiveBetter(?!/(?:issues|pull|commit|discussions))}{github.com/FavorPan/HowToLiveBetter}g'
+          git add -A
+          tree=$(git write-tree)
+          remote=$(git rev-parse --verify 'origin/cloudflare-deploy^{tree}' 2>/dev/null || echo none)
+          if [ "$tree" = "$remote" ]; then
+            echo "站点文件无变化，跳过推送"
+          else
+            git commit -m "chore: rewrite site URLs for Cloudflare deploy [skip ci]"
+            git push origin cloudflare-deploy --force
+          fi
+
+      # push 用的是 GITHUB_TOKEN，GitHub 不会让它再触发其他 workflow，
+      # 所以 main 有内容变化时在这里手动补一次，电子书 Release 才会更新
+      - name: Rebuild ebook release
+        if: env.MAIN_CHANGED == 'true'
+        run: gh workflow run book.yml --ref main
+        env:
+          GH_TOKEN: ${{ github.token }}
 
       # 仓库 60 天无活动 GitHub 会自动停用定时任务，临近时自动补一个空提交保活
       - name: Keepalive
