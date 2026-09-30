@@ -51,4 +51,13 @@ jobs:
 
       # 仓库 60 天无活动 GitHub 会自动停用定时任务，临近时自动补一个空提交保活
       - name: Keepalive
-        uses: gautamkrishnar/keepalive-workflow@v2
+        run: |
+          last=$(git log -1 --format=%ct origin/main)
+          now=$(date +%s)
+          age=$(( (now - last) / 86400 ))
+          if [ "$age" -ge 50 ]; then
+            git commit --allow-empty -m "chore: keepalive（空提交保活定时任务）"
+            git push origin main
+          else
+            echo "最近一次提交距今 ${age} 天，无需保活"
+          fi
