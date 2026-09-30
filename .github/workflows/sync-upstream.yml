@@ -14,6 +14,11 @@ on:
   schedule:
     - cron: "*/10 * * * *"
   workflow_dispatch:
+    inputs:
+      force_ebook:
+        description: "无内容变化也强制重建电子书 Release（调试用）"
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -88,10 +93,11 @@ jobs:
           fi
 
       # push 用的是 GITHUB_TOKEN，GitHub 不会让它再触发其他 workflow，
-      # 所以 main 有内容变化时在这里手动补一次，电子书 Release 才会更新
+      # 所以 main 有内容变化时在这里手动补一次，电子书 Release 才会更新。
+      # gh 在 fork 仓库里默认解析到上游父仓库，必须显式 --repo 指回本仓库
       - name: Rebuild ebook release
-        if: env.MAIN_CHANGED == 'true'
-        run: gh workflow run book.yml --ref main
+        if: env.MAIN_CHANGED == 'true' || inputs.force_ebook == true
+        run: gh workflow run book.yml --repo "$GITHUB_REPOSITORY" --ref main
         env:
           GH_TOKEN: ${{ github.token }}
 
