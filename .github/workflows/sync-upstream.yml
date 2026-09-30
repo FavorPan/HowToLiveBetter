@@ -1,0 +1,54 @@
+# 每 10 分钟从上游同步一次（GitHub 定时任务最细 5 分钟，高峰期调度可能延迟）。
+# main 保持与上游一致（只多本 workflow 文件，路径上游不会用，merge 永不冲突）；
+# pages-deploy 为自动生成的部署分支：替换站点域名为本 fork 的 Pages 地址后强推，
+# GitHub Pages（legacy，源分支 pages-deploy）会在推送后自动重新构建发布。
+# 上游的「电子书」workflow 仍会在 main 内容变化时自动发布 EPUB/PDF 到本 fork 的 Release。
+name: Sync upstream
+
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: sync-upstream
+  cancel-in-progress: true
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Merge upstream/main
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git remote add upstream https://github.com/eternity4719/HowToLiveBetter.git
+          git fetch upstream main
+          git merge upstream/main --no-edit
+          git push origin main
+
+      - name: Build pages-deploy branch
+        run: |
+          git checkout -B pages-deploy
+          grep -rl 'eternity4719\.github\.io/HowToLiveBetter' \
+            --include='*.html' --include='*.xml' --include='*.txt' . \
+            | xargs -r perl -pi -e 's{https://eternity4719\.github\.io/HowToLiveBetter}{https://favorpan.github.io/HowToLiveBetter}g'
+          git add -A
+          if git diff --cached --quiet; then
+            echo "站点文件无变化，跳过提交"
+          else
+            git commit -m "chore: rewrite site URLs for fork Pages deploy [skip ci]"
+          fi
+          git push origin pages-deploy --force
+
+      # 仓库 60 天无活动 GitHub 会自动停用定时任务，临近时自动补一个空提交保活
+      - name: Keepalive
+        uses: gautamkrishnar/keepalive-workflow@v2
