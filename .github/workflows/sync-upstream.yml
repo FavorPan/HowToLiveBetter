@@ -1,8 +1,10 @@
 # 每 10 分钟从上游同步一次（GitHub 定时任务最细 5 分钟，高峰期调度可能延迟）。
 # main 只比上游多本 workflow 文件和一份改过链接的 README（在线检索换
 # favorhub.top，下载、clone 和 Star 走势换 FavorPan，「写明出处」的署名行保留
-# 上游）；上游改到同一行会冲突，合并步骤冲突时取上游版、下一步重放改写，
-# 定时任务不会卡在冲突上。
+# 上游）；.github/workflows/ 则固定为本 fork 版：GITHUB_TOKEN 推不了含 workflow
+# 变更的提交（workflows 权限给不了 GITHUB_TOKEN，实测 422），上游的 workflow
+# 改动要跟进只能手工合。上游改到 README 同一行会冲突，合并步骤冲突时取
+# 上游版、下一步重放改写，定时任务不会卡在冲突上。
 # pages-deploy 为自动生成的部署分支：替换站点域名为本 fork 的 Pages 地址后强推，
 # GitHub Pages（legacy，源分支 pages-deploy）会在推送后自动重新构建发布。
 # cloudflare-deploy 同理：替换站点域名为 howtolivebetter.favorhub.top、仓库和
@@ -52,12 +54,23 @@ jobs:
           git remote add upstream https://github.com/eternity4719/HowToLiveBetter.git
           git fetch upstream main
           before=$(git rev-parse HEAD)
-          # main 的 README 带本地改写（见下一步），上游改到同一行会冲突：
-          # 冲突时取上游版提交，改写由下一步重放，两边收敛
-          if ! git merge upstream/main --no-edit; then
+          # --no-commit：合并完先别提交，下面把 workflow 文件恢复成本 fork 版再提交
+          if git merge upstream/main --no-edit --no-commit; then :; else
+            # main 的 README 带本地改写（见下一步），上游改到同一行会冲突：
+            # 取上游版提交，改写由下一步重放，两边收敛
             git checkout --theirs -- README.md
             git add README.md
+          fi
+          # workflow 文件一律恢复成本 fork 版：GITHUB_TOKEN 永远推不了含 workflow
+          # 变更的提交（workflows 权限给不了 GITHUB_TOKEN，实测 422），上游的
+          # workflow 改动要跟进只能手工合
+          git rm -r -f --ignore-unmatch --quiet .github/workflows/
+          git checkout HEAD -- .github/workflows/
+          # 合并没带来实际变化（或只有被挡下的 workflow 变化）就不提交
+          if ! git diff --cached --quiet; then
             git commit --no-edit
+          else
+            git merge --abort 2>/dev/null || true
           fi
           git push origin main
           if [ "$(git rev-parse HEAD)" != "$before" ]; then
