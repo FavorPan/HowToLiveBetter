@@ -1,11 +1,15 @@
 # 每 10 分钟从上游同步一次（GitHub 定时任务最细 5 分钟，高峰期调度可能延迟）。
-# main 保持与上游一致（只多本 workflow 文件，路径上游不会用，merge 永不冲突）；
+# main 只比上游多本 workflow 文件和一份改过链接的 README（在线检索换
+# favorhub.top，下载、clone 和 Star 走势换 FavorPan，「写明出处」的署名行保留
+# 上游）；上游改到同一行会冲突，合并步骤冲突时取上游版、下一步重放改写，
+# 定时任务不会卡在冲突上。
 # pages-deploy 为自动生成的部署分支：替换站点域名为本 fork 的 Pages 地址后强推，
 # GitHub Pages（legacy，源分支 pages-deploy）会在推送后自动重新构建发布。
 # cloudflare-deploy 同理：替换站点域名为 howtolivebetter.favorhub.top、仓库和
-# README 链接为本 fork 的，并摘除 GA 统计、广告位和赞赏码（连同弹窗 JS/CSS 与
-# ads/ 目录、tools/ 下广告源文件，残留校验不过就失败），由 Cloudflare Pages
-# 连接该分支自动发布；issue、Star History 等指向上游出处的链接保留不动。
+# README 链接为本 fork 的（README 的链接已随 main 改好），并摘除 GA 统计、
+# 广告位和赞赏码（连同弹窗 JS/CSS 与 ads/ 目录、tools/ 下广告源文件，残留校验
+# 不过就失败），由 Cloudflare Pages 连接该分支自动发布；README 的署名行保留
+# 上游，站点页面里指向 issue 等上游出处的链接保留不动。
 # 「电子书」workflow（book.yml）不会因同步的 push 触发（GITHUB_TOKEN 的 push
 # 不触发其他 workflow，GitHub 防递归），本 workflow 在 main 有内容变化时手动
 # dispatch 一次，保持 Release 电子书最新。
@@ -45,9 +49,29 @@ jobs:
           git remote add upstream https://github.com/eternity4719/HowToLiveBetter.git
           git fetch upstream main
           before=$(git rev-parse HEAD)
-          git merge upstream/main --no-edit
+          # main 的 README 带本地改写（见下一步），上游改到同一行会冲突：
+          # 冲突时取上游版提交，改写由下一步重放，两边收敛
+          if ! git merge upstream/main --no-edit; then
+            git checkout --theirs -- README.md
+            git add README.md
+            git commit --no-edit
+          fi
           git push origin main
           if [ "$(git rev-parse HEAD)" != "$before" ]; then
+            echo "MAIN_CHANGED=true" >> "$GITHUB_ENV"
+          fi
+
+      # main 的 README 链接指到本 fork：在线检索换 favorhub.top，下载、clone 和
+      # Star 走势换 FavorPan；「写明出处」一行是 CC BY 的署名要求，保留上游。
+      # 上游后来改到同一行时，合并步骤已取上游版，这里重放改写，两边收敛。
+      # README 变了同样算 MAIN_CHANGED，电子书 Release 才会跟着重出。
+      - name: Rewrite README links to fork
+        run: |
+          perl -pi -e 's{https://eternity4719\.github\.io/HowToLiveBetter}{https://howtolivebetter.favorhub.top}g; unless (/写明出处/) { s{eternity4719/HowToLiveBetter}{FavorPan/HowToLiveBetter}g }' README.md
+          if ! git diff --quiet README.md; then
+            git add README.md
+            git commit -m "chore: README 链接改指本 fork [skip ci]"
+            git push origin main
             echo "MAIN_CHANGED=true" >> "$GITHUB_ENV"
           fi
 
@@ -71,8 +95,9 @@ jobs:
             git push origin pages-deploy --force
           fi
 
-      # 同上，但目标是 Cloudflare Pages：站点域名、GitHub 仓库和 README 链接都
-      # 改到本 fork；issue、Star History 等上游出处保留。扫描用宽词 eternity4719
+      # 同上，但目标是 Cloudflare Pages：站点域名和 GitHub 仓库链接都改到本
+      # fork（README 的链接已随 main 改好，署名行下面单独恢复）；站点页面里
+      # 指向 issue 等上游出处的链接保留。扫描用宽词 eternity4719
       # （github.io 域名里没有紧跟斜杠，窄词选不中 sitemap.xml 和 robots.txt），
       # 不放心的改写都做了护栏：issues/pull/commit/discussions 不改，.yml 和
       # LICENSE、构建脚本不在扫描范围。
@@ -88,6 +113,8 @@ jobs:
             --exclude-dir=.git \
             --include='*.html' --include='*.xml' --include='*.txt' --include='*.md' . \
             | xargs -r perl -pi -e 's{https://eternity4719\.github\.io/HowToLiveBetter}{https://howtolivebetter.favorhub.top}g; s{raw\.githubusercontent\.com/eternity4719/HowToLiveBetter}{raw.githubusercontent.com/FavorPan/HowToLiveBetter}g; s{github\.com/eternity4719/HowToLiveBetter(?!/(?:issues|pull|commit|discussions))}{github.com/FavorPan/HowToLiveBetter}g'
+          # 「写明出处」一行是 CC BY 的署名要求，恢复成上游仓库
+          perl -pi -e 's{github\.com/FavorPan/HowToLiveBetter}{github.com/eternity4719/HowToLiveBetter}g if /写明出处/' README.md
           perl -0777 -pi -e 's,<!-- ga:start.*?<!-- ga:end -->\n?,,s; s,\s*<div class="group ad">.*?</div>\s*</aside>,\n</aside>,s; s,/\* 赞赏：侧栏底部一行字.*?#tip-box button:hover\{.*?\}\n,,s; s,\s*<div id="tip-mask" hidden>.*?</div>\s*(<div id="xref-pop"),$1,s; s,/\* ---------- 赞赏码弹窗 ---------- \*/.*?\n(\(async function init\(\)\{),$1,s' index.html
           perl -0777 -pi -e 's,\n## 赞赏[\s\S]*$,,s' README.md
           rm -rf ads tools/ad-mcyyy.html tools/ad-mcyyy-side.html tools/ad-mcyyy-bg.webp
