@@ -3,8 +3,9 @@
 # pages-deploy 为自动生成的部署分支：替换站点域名为本 fork 的 Pages 地址后强推，
 # GitHub Pages（legacy，源分支 pages-deploy）会在推送后自动重新构建发布。
 # cloudflare-deploy 同理：替换站点域名为 howtolivebetter.favorhub.top、仓库和
-# README 链接为本 fork 的，由 Cloudflare Pages 连接该分支自动发布；
-# issue、Star History 等指向上游出处的链接保留不动。
+# README 链接为本 fork 的，并摘除 GA 统计、广告位和赞赏码（连同弹窗 JS/CSS 与
+# ads/ 目录、tools/ 下广告源文件，残留校验不过就失败），由 Cloudflare Pages
+# 连接该分支自动发布；issue、Star History 等指向上游出处的链接保留不动。
 # 「电子书」workflow（book.yml）不会因同步的 push 触发（GITHUB_TOKEN 的 push
 # 不触发其他 workflow，GitHub 防递归），本 workflow 在 main 有内容变化时手动
 # dispatch 一次，保持 Release 电子书最新。
@@ -75,6 +76,11 @@ jobs:
       # （github.io 域名里没有紧跟斜杠，窄词选不中 sitemap.xml 和 robots.txt），
       # 不放心的改写都做了护栏：issues/pull/commit/discussions 不改，.yml 和
       # LICENSE、构建脚本不在扫描范围。
+      # 另外摘除 GA 统计、广告位和赞赏码，并校验残留：GA 片段自带 ga:start/ga:end
+      # 剥离标记（离线构建同款）；广告图和赞赏按钮同在一个 div 里一起删；赞赏弹窗
+      # 的 HTML、CSS、JS 三处一起摘，只删 HTML 的话弹窗 JS 会对 null 加监听抛错、
+      # 中断整个初始化脚本。README 从「## 赞赏」标题删到文件尾（赞赏和广告位是
+      # 最后两节）。ads/ 目录和 tools/ 下的广告源文件一并移除。
       - name: Build cloudflare-deploy branch
         run: |
           git checkout -B cloudflare-deploy main
@@ -82,6 +88,13 @@ jobs:
             --exclude-dir=.git \
             --include='*.html' --include='*.xml' --include='*.txt' --include='*.md' . \
             | xargs -r perl -pi -e 's{https://eternity4719\.github\.io/HowToLiveBetter}{https://howtolivebetter.favorhub.top}g; s{raw\.githubusercontent\.com/eternity4719/HowToLiveBetter}{raw.githubusercontent.com/FavorPan/HowToLiveBetter}g; s{github\.com/eternity4719/HowToLiveBetter(?!/(?:issues|pull|commit|discussions))}{github.com/FavorPan/HowToLiveBetter}g'
+          perl -0777 -pi -e 's,<!-- ga:start.*?<!-- ga:end -->\n?,,s; s,\s*<div class="group ad">.*?</div>\s*</aside>,\n</aside>,s; s,/\* 赞赏：侧栏底部一行字.*?#tip-box button:hover\{.*?\}\n,,s; s,\s*<div id="tip-mask" hidden>.*?</div>\s*(<div id="xref-pop"),$1,s; s,/\* ---------- 赞赏码弹窗 ---------- \*/.*?\n(\(async function init\(\)\{),$1,s' index.html
+          perl -0777 -pi -e 's,\n## 赞赏[\s\S]*$,,s' README.md
+          rm -rf ads tools/ad-mcyyy.html tools/ad-mcyyy-side.html tools/ad-mcyyy-bg.webp
+          if grep -n 'googletagmanager\|mcyyy\|wechat-reward\|赞赏\|tip-open\|tip-mask\|tip-box\|group ad' index.html README.md; then
+            echo '统计、广告或赞赏清除不彻底，拒绝发布' >&2
+            exit 1
+          fi
           git add -A
           tree=$(git write-tree)
           remote=$(git rev-parse --verify 'origin/cloudflare-deploy^{tree}' 2>/dev/null || echo none)
