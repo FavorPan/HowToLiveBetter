@@ -1,10 +1,11 @@
 # 每 10 分钟从上游同步一次（GitHub 定时任务最细 5 分钟，高峰期调度可能延迟）。
-# main 只比上游多本 workflow 文件和一份改过链接的 README（在线检索换
-# favorhub.top，下载、clone 和 Star 走势换 FavorPan，「写明出处」的署名行保留
-# 上游）；.github/workflows/ 则固定为本 fork 版：GITHUB_TOKEN 推不了含 workflow
-# 变更的提交（workflows 权限给不了 GITHUB_TOKEN，实测 422），上游的 workflow
-# 改动要跟进只能手工合。上游改到 README 同一行会冲突，合并步骤冲突时取
-# 上游版、下一步重放改写，定时任务不会卡在冲突上。
+# main 只比上游多本 workflow 文件和一份按本 fork 口径改过的 README（在线检索
+# 换 favorhub.top，下载、clone 和 Star 走势换 FavorPan，「写明出处」的署名行
+# 保留上游，「赞赏」「广告位」两节删掉）；.github/workflows/ 则固定为本 fork
+# 版：GITHUB_TOKEN 推不了含 workflow 变更的提交（workflows 权限给不了
+# GITHUB_TOKEN，实测 422），上游的 workflow 改动要跟进只能手工合。上游改到
+# README 同一行会冲突，合并步骤冲突时取上游版、下一步重放改写，定时任务
+# 不会卡在冲突上。
 # pages-deploy 为自动生成的部署分支：替换站点域名为本 fork 的 Pages 地址后强推，
 # GitHub Pages（legacy，源分支 pages-deploy）会在推送后自动重新构建发布。
 # cloudflare-deploy 同理：替换站点域名为 howtolivebetter.favorhub.top、仓库和
@@ -74,13 +75,16 @@ jobs:
             echo "MAIN_CHANGED=true" >> "$GITHUB_ENV"
           fi
 
-      # main 的 README 链接指到本 fork：在线检索换 favorhub.top，下载、clone 和
-      # Star 走势换 FavorPan；「写明出处」一行是 CC BY 的署名要求，保留上游。
-      # 上游后来改到同一行时，合并步骤已取上游版，这里重放改写，两边收敛。
-      # README 变了同样算 MAIN_CHANGED，电子书 Release 才会跟着重出。
+      # main 的 README 按本 fork 口径改写：在线检索换 favorhub.top，下载、clone
+      # 和 Star 走势换 FavorPan；「写明出处」一行是 CC BY 的署名要求，保留上游；
+      # 「赞赏」「广告位」两节整节删掉（从标题行到下一个 ## 标题或文件尾，上游
+      # 以后在末尾追加新节不会被误删）。上游后来改到同一行时，合并步骤已取
+      # 上游版，这里重放改写，两边收敛。README 变了同样算 MAIN_CHANGED，
+      # 电子书 Release 才会跟着重出。
       - name: Rewrite README links to fork
         run: |
           perl -pi -e 's{https://eternity4719\.github\.io/HowToLiveBetter}{https://howtolivebetter.favorhub.top}g; unless (/写明出处/) { s{eternity4719/HowToLiveBetter}{FavorPan/HowToLiveBetter}g }' README.md
+          perl -pi -e 'if (/^## (?:赞赏|广告位)\s*$/) { $skip = 1 } elsif (/^## /) { $skip = 0 } $_ = "" if $skip' README.md
           if ! git diff --quiet README.md; then
             git add README.md
             git commit -m "chore: README 链接改指本 fork [skip ci]"
