@@ -28,6 +28,9 @@ on:
 permissions:
   contents: write
   actions: write
+  # 上游往 .github/workflows/ 里加新文件时（如 2026-10-01 的 links.yml），
+  # GITHUB_TOKEN 没 workflows 权限推不了含 workflow 文件的提交
+  workflows: write
 
 concurrency:
   group: sync-upstream
