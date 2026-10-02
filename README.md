@@ -5,24 +5,24 @@
 # 高性价比人生指南
 
 讲怎么活得久、怎么少生病，出了意外怎么救。讲怎么少花冤枉钱，哪些事会让人被骗、摊上官司。讲没工作没钱时能去领什么，开店、开公司、做网站要办什么手续。也讲恋爱结婚生孩子、出国和学手艺。法律、医保、社保这些制度上的内容，按中国大陆的现行规定写。<br>
-649 条建议，每条写明花掉什么、换回什么、证据有多硬，来源只引期刊论文和官方文件。
+650 条建议，每条写明花掉什么、换回什么、证据有多硬，来源只引期刊论文和官方文件。
 
 不用全做：这是按性价比排好的备选单，不是任务清单——挑走一两条就算数，作者自己也没做到其中大部分。
 
-[![在线检索](https://img.shields.io/badge/%E5%9C%A8%E7%BA%BF%E6%A3%80%E7%B4%A2-%E7%82%B9%E8%BF%99%E9%87%8C%E6%89%93%E5%BC%80-3451b2?style=flat-square)](https://howtolivebetter.favorhub.top/)
-[![条目](https://img.shields.io/badge/%E6%9D%A1%E7%9B%AE-649%20%E6%9D%A1-18794e?style=flat-square)](#目录)
-[![证据分级](https://img.shields.io/badge/%E8%AF%81%E6%8D%AE%E5%88%86%E7%BA%A7-A%20428%20%C2%B7%20B%20171%20%C2%B7%20C%2050-915930?style=flat-square)](#证据分级)
-[![原始文献](https://img.shields.io/badge/%E5%8E%9F%E5%A7%8B%E6%96%87%E7%8C%AE-1532%20%E6%9D%A1%E9%93%BE%E6%8E%A5-565a5f?style=flat-square)](docs/核实记录/)
+[![在线检索](https://img.shields.io/badge/%E5%9C%A8%E7%BA%BF%E6%A3%80%E7%B4%A2-%E7%82%B9%E8%BF%99%E9%87%8C%E6%89%93%E5%BC%80-3451b2?style=flat-square)](https://eternity4719.github.io/HowToLiveBetter/)
+[![条目](https://img.shields.io/badge/%E6%9D%A1%E7%9B%AE-650%20%E6%9D%A1-18794e?style=flat-square)](#目录)
+[![证据分级](https://img.shields.io/badge/%E8%AF%81%E6%8D%AE%E5%88%86%E7%BA%A7-A%20428%20%C2%B7%20B%20171%20%C2%B7%20C%2051-915930?style=flat-square)](#证据分级)
+[![原始文献](https://img.shields.io/badge/%E5%8E%9F%E5%A7%8B%E6%96%87%E7%8C%AE-1539%20%E6%9D%A1%E9%93%BE%E6%8E%A5-565a5f?style=flat-square)](docs/核实记录/)
 [![许可](https://img.shields.io/badge/%E8%AE%B8%E5%8F%AF-CC%20BY%204.0-565a5f?style=flat-square)](#许可)
 
-### [打开在线检索页](https://howtolivebetter.favorhub.top/) · [让 AI 照书回答（skill）](skills/life-decision-guide/README.md)
+### [打开在线检索页](https://eternity4719.github.io/HowToLiveBetter/) · [让 AI 照书回答（skill）](skills/life-decision-guide/README.md)
 
 AI 助手 skill 支持 Claude Code 和 Codex。装上后直接问「替朋友担保签不签」，它先查书里的条目再回答，并注明出自第几节第几条。
 
 <table>
 <tr><td align="right"><b>下载</b></td><td align="left">
 
-[PDF](https://github.com/FavorPan/HowToLiveBetter/releases/download/epub-latest/HowToLiveBetter.pdf) · [EPUB](https://github.com/FavorPan/HowToLiveBetter/releases/download/epub-latest/HowToLiveBetter.epub) · [离线单文件（HTML）](https://github.com/FavorPan/HowToLiveBetter/releases/download/epub-latest/HowToLiveBetter.html)
+[PDF](https://github.com/eternity4719/HowToLiveBetter/releases/download/epub-latest/HowToLiveBetter.pdf) · [EPUB](https://github.com/eternity4719/HowToLiveBetter/releases/download/epub-latest/HowToLiveBetter.epub) · [离线单文件（HTML）](https://github.com/eternity4719/HowToLiveBetter/releases/download/epub-latest/HowToLiveBetter.html)
 
 </td></tr>
 <tr><td align="right"><b>查阅</b></td><td align="left">
@@ -96,12 +96,12 @@ AI 助手 skill 支持 Claude Code 和 Codex。装上后直接问「替朋友担
 
 - **不用全做**：这是一份按性价比排好的备选单，不是任务清单。挑走一两条就算数，剩下的放着，需要时再回来查。「说着容易做着难」这个评价是对的——作者自己也没做到其中大部分，写下来是为了要用的时候找得到。想挑省力的，看下面「只想看最值得做的」那条。
 - **想让 AI 帮你查**：仓库里带了一个中文 skill（[skills/life-decision-guide](skills/life-decision-guide/)），Claude Code 和 Codex 都能装。装上以后直接问「替朋友担保签不签」「每天通勤两小时值不值」。它会先把相关条目从正文里查出来，再照书里的算账方式排序回答，并注明出自第几节第几条。查不到就说查不到，不自己编数字。装法见 [那个目录的说明](skills/life-decision-guide/README.md)。
-- **想按条件挑**：打开[在线检索页](https://howtolivebetter.favorhub.top/)，可以按关键词、章节、证据等级来筛，也可以按「花不花钱、花多少时间、要不要毅力」这三样筛，几个条件能叠着用。页面上的内容直接取自 book/ 目录里的正文，正文一改，页面跟着改。
+- **想按条件挑**：打开[在线检索页](https://eternity4719.github.io/HowToLiveBetter/)，可以按关键词、章节、证据等级来筛，也可以按「花不花钱、花多少时间、要不要毅力」这三样筛，几个条件能叠着用。页面上的内容直接取自 book/ 目录里的正文，正文一改，页面跟着改。
 - **条目之间会互相指路**（「见第 8 节第 17 条」这种）：在检索页里，这种指路带一条虚线。点一下，就地显示被指的那条的标题和「说人话」。想真的翻过去，再按「跳过去」。那一条正好被筛选条件藏起来了，页面会自动把筛选清掉。在 GitHub 上直接读正文点不动，但每处指路后面都写着指向什么（「见第 18 条（借钱写清借条）」）。不翻过去也知道说的是哪条。
 - **想按顺序读**：每节内的条目按性价比从高到低排列，从每节前几条开始看就行。
-- **想离线看、想发给别人**：下载 [离线单文件 HTML](https://github.com/FavorPan/HowToLiveBetter/releases/download/epub-latest/HowToLiveBetter.html)，整本书连同检索和筛选都在这一个文件里，双击就开，不用服务器也不用联网，微信里也能直接传。
-- **想打印或在手机上翻**：下载 [PDF](https://github.com/FavorPan/HowToLiveBetter/releases/download/epub-latest/HowToLiveBetter.pdf)，A4 排版、两百多页，带目录页码和书签，每节另起一页。
-- **想在 Kindle 或其他阅读器上读**：下载 [EPUB 电子书](https://github.com/FavorPan/HowToLiveBetter/releases/download/epub-latest/HowToLiveBetter.epub)，Kindle 用 Send to Kindle 发过去即可。
+- **想离线看、想发给别人**：下载 [离线单文件 HTML](https://github.com/eternity4719/HowToLiveBetter/releases/download/epub-latest/HowToLiveBetter.html)，整本书连同检索和筛选都在这一个文件里，双击就开，不用服务器也不用联网，微信里也能直接传。
+- **想打印或在手机上翻**：下载 [PDF](https://github.com/eternity4719/HowToLiveBetter/releases/download/epub-latest/HowToLiveBetter.pdf)，A4 排版、两百多页，带目录页码和书签，每节另起一页。
+- **想在 Kindle 或其他阅读器上读**：下载 [EPUB 电子书](https://github.com/eternity4719/HowToLiveBetter/releases/download/epub-latest/HowToLiveBetter.epub)，Kindle 用 Send to Kindle 发过去即可。
 - **三样都是正文每次更新后自动重新生成的**，下载链接固定不变；转发出去的那一份不会跟着更新，以在线版为准。
 - **看不懂那串数字**：每条都有一行「说人话」。它把「收益」栏里那些研究里的写法，翻成「同期死亡的概率低约两成」「拘留几日、罚多少钱」这样的日常说法。它只用「收益」栏已经写到的内容，不添新数字。只看这一行就够拿主意。「收益」栏里原样留着全部数字，想自己核对就看那一栏。
 - **只想看结论最硬的**：在检索页里勾选证据等级 A，只留下有具体数字、来自荟萃分析或大型试验的 428 条。
@@ -122,12 +122,12 @@ AI 助手 skill 支持 Claude Code 和 Codex。装上后直接问「替朋友担
 
 ## 自己跑一份
 
-多数人用不着部署：[在线检索页](https://howtolivebetter.favorhub.top/)是现成的，要离线就下[离线单文件 HTML](https://github.com/FavorPan/HowToLiveBetter/releases/download/epub-latest/HowToLiveBetter.html)，双击就开。
+多数人用不着部署：[在线检索页](https://eternity4719.github.io/HowToLiveBetter/)是现成的，要离线就下[离线单文件 HTML](https://github.com/eternity4719/HowToLiveBetter/releases/download/epub-latest/HowToLiveBetter.html)，双击就开。
 
 真要在自己电脑或服务器上跑：
 
 ```bash
-git clone https://github.com/FavorPan/HowToLiveBetter.git
+git clone https://github.com/eternity4719/HowToLiveBetter.git
 cd HowToLiveBetter
 python -m http.server 8000
 ```
@@ -171,7 +171,7 @@ node tools/pdf/build.mjs                   # PDF，另需 pandoc ≥ 3.1 和 typ
 | B | 有研究支持，但说不出一个确切数字；或者只有小样本、单独一项研究撑着 |
 | C | 作者自己的经验，或者大家公认的做法，没有直接的研究文献 |
 
-全书 649 条中 A 级 428 条、B 级 171 条、C 级 50 条，另有 65 条标注了争议、3 处标注了 TODO 待核实。有争议的 A/B 级条目会标注「争议」并列出反方证据。所有来源只引原始文献（期刊论文附 DOI 或 PubMed 链接，或 WHO/CDC/国家统计局等官方机构报告），不引二手转述。不确定的数字标「待核实」。
+全书 650 条中 A 级 428 条、B 级 171 条、C 级 51 条，另有 65 条标注了争议、3 处标注了 TODO 待核实。有争议的 A/B 级条目会标注「争议」并列出反方证据。所有来源只引原始文献（期刊论文附 DOI 或 PubMed 链接，或 WHO/CDC/国家统计局等官方机构报告），不引二手转述。不确定的数字标「待核实」。
 
 A 级只说明「有具体数字、出处可核」，不说明这个数字一定是因果。A 级里既有随机分组的试验，也有只跟踪记录、不分组的研究，后者分不清是这件事起了作用，还是做这件事的人本来就更健康。哪一种看收益栏：写着「随机分成两组」的是前者，写着「只记录、不分组」的是后者。法律和政策类条目的 A 级，指的是引到了法条或官方文件原文。
 
@@ -187,7 +187,7 @@ A 级只说明「有具体数字、出处可核」，不说明这个数字一定
 | 收益量级 | 大 / 中 / 小 | 尽量照着条目自己的「收益」栏，按事先定好的界线套，不凭感觉：换寿命看降了百分之几（≥20% 为大，10–20% 为中，<10%、或者只量到中间指标而没量到最终结果的为小）；换钱看金额（万元级为大，数百到数千为中，几十元为小）；换人身自由看后果（避免刑事责任为大，避免拘留或行政处罚为中，避免民事纠纷为小）；换时间精力看省下多少（每天省出小时级为大，每周小时级为中，只省一次的为小） |
 | 性价比 | 极高 / 高 / 一般 | 好处大、三项成本又全是零 = 极高；好处大、成本不高，或者好处中等、成本为零 = 高；剩下的 = 一般 |
 
-全书 649 条中性价比极高 111 条（17%）、高 294 条（45%）、一般 244 条（38%）。中间那档条数多是有意的：底下的收益量级本来就只分大、中、小三级，再往细里切就是装出来的精确。
+全书 650 条中性价比极高 111 条（17%）、高 294 条（45%）、一般 245 条（38%）。中间那档条数多是有意的：底下的收益量级本来就只分大、中、小三级，再往细里切就是装出来的精确。
 
 **这一档是作者自己的判断，不是证据**，按本书的标准它本身只算 C 级；它和证据等级是两回事，谁也不影响谁。一条可以证据是 A 级、性价比却只算一般（带状疱疹疫苗有 97.2% 效力的三期 RCT，但两针三四千元、带状疱疹很少致命），也可以证据只有 C 级、性价比却极高（出境前把行程发给家人）。「一般」不等于不该做——全书的条目都是建议做的，只是这一档得你自己掂量那笔花销值不值。
 
@@ -246,7 +246,7 @@ A 级只说明「有具体数字、出处可核」，不说明这个数字一定
 
 ## 目录
 
-1. [不要早死](book/01-不要早死.md)：外因死亡、燃气与中毒、疫苗、筛查、心理危机与自杀念头的时间尺度、被救回来之后留下什么、坠落重伤之后的那一年、卖掉一个肾之后剩下那个肾的账、家庭应急装备、肉眼血尿等该去查的信号、65 岁以上女性查骨密度与查出骨质疏松就用药。口径：总死亡率 或特定死因。
+1. [不要早死](book/01-不要早死.md)：外因死亡、燃气与中毒、疫苗、筛查、心理危机与自杀念头的时间尺度、被救回来之后留下什么、坠落重伤之后的那一年、卖掉一个肾之后剩下那个肾的账、家庭应急装备、肉眼血尿等该去查的信号、65 岁以上女性查骨密度与查出骨质疏松就用药、上野外冰面前先量冰厚。口径：总死亡率 或特定死因。
 2. [不要慢慢死](book/02-不要慢慢死.md)：烟酒、运动、睡眠、饮食（低钠盐、坚果、全谷物、加工肉、散装自榨花生油、植物油代替猪油）、久坐，以及戒烟戒酒的具体办法（戒烟药、戒烟日、戒烟门诊与热线、电子烟、酒精戒断不能自己硬扛）、午睡时长、熬夜之后怎么补、上夜班的年数账、做饭开抽油烟机。口径：总死亡率 或特定死因。长文见 [docs/生物钟和夜班.md](docs/生物钟和夜班.md)。
 3. [不要浪费精力](book/03-不要浪费精力.md)：睡眠、打断、多任务、人际负债、和机构打交道时该有的预期。口径：精力/时间。
 4. [不要浪费时间](book/04-不要浪费时间.md)：无收益项目、沉没成本、拖延（情绪解释、改环境、承诺装置、习惯要多久、自助材料）、会议、通勤。口径：时间。
@@ -287,7 +287,7 @@ A 级只说明「有具体数字、出处可核」，不说明这个数字一定
 
 ## 正文
 
-正文按节拆成 34 个文件放在 [book/](book/)，点上面目录里的节名进入。拆开是因为单文件已经超过 GitHub 渲染 Markdown 的 512 KB 上限，后面的节显示不出来；[在线检索页](https://howtolivebetter.favorhub.top/)会把这些文件合起来读，用法不变。
+正文按节拆成 34 个文件放在 [book/](book/)，点上面目录里的节名进入。拆开是因为单文件已经超过 GitHub 渲染 Markdown 的 512 KB 上限，后面的节显示不出来；[在线检索页](https://eternity4719.github.io/HowToLiveBetter/)会把这些文件合起来读，用法不变。
 
 ## 许可
 
@@ -301,5 +301,14 @@ A 级只说明「有具体数字、出处可核」，不说明这个数字一定
 
 ## Star 走势
 
-[![Star History Chart](https://api.star-history.com/svg?repos=FavorPan/HowToLiveBetter&type=Date)](https://star-history.com/#FavorPan/HowToLiveBetter&Date)
+[![Star History Chart](https://api.star-history.com/svg?repos=eternity4719/HowToLiveBetter&type=Date)](https://star-history.com/#eternity4719/HowToLiveBetter&Date)
 
+## 赞赏
+
+觉得有用，可以用微信扫码请作者喝杯咖啡。给不给都行，不影响任何内容。
+
+<img src="ads/wechat-reward.png" alt="微信赞赏码" width="240">
+
+## 广告位
+
+<a href="https://4.mcyyy.com"><img src="ads/mcyyy.webp" alt="永恒世界 Minecraft 服务器，游戏地址 1.mcyyy.com" width="820"></a>
