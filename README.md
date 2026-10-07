@@ -53,6 +53,8 @@ AI 助手 skill 支持 Claude Code 和 Codex。装上后直接问「替朋友担
 
 [微信小程序版](https://github.com/HuiTurn/HowToLiveBetter)，[HuiTurn](https://github.com/HuiTurn) 做的小程序：分类、收藏、每日一读、全文搜索，离线可用
 
+[高性价比人生指南行动版](https://apps.apple.com/cn/app/id6818596108)，GUGU VITALITY LIMITED 做的 iOS App：左右滑卡片决定做不做，做一次的放进清单，要重复做的设成打卡，离线可用；免费版清单和打卡有数量限制
+
 </td></tr>
 </table>
 
