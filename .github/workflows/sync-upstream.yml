@@ -96,6 +96,9 @@ jobs:
       # 内容没变就不提交不推送。原写法 git diff --cached 比较的是改写结果对 main，
       # 而改写结果对 main 永远有差异，定时任务会每 10 分钟强推一个同内容提交；
       # 改成比较改写后 tree 的哈希，跟远端分支一致就跳过。
+      # 提交信息不能带 [skip ci]：Cloudflare Pages 和 GitHub Actions 一样认这个
+      # 标记，带了这个后缀它就不构建（2026-10-08 发现线上停在 10-01 的原因）。
+      # GitHub 侧不需要它——GITHUB_TOKEN 的 push 本来就不触发其他 workflow。
       - name: Build pages-deploy branch
         run: |
           git checkout -B pages-deploy main
@@ -109,7 +112,7 @@ jobs:
           if [ "$tree" = "$remote" ]; then
             echo "站点文件无变化，跳过推送"
           else
-            git commit -m "chore: rewrite site URLs for fork Pages deploy [skip ci]"
+            git commit -m "chore: rewrite site URLs for fork Pages deploy"
             git push origin pages-deploy --force
           fi
 
@@ -148,7 +151,7 @@ jobs:
           if [ "$tree" = "$remote" ]; then
             echo "站点文件无变化，跳过推送"
           else
-            git commit -m "chore: rewrite site URLs for Cloudflare deploy [skip ci]"
+            git commit -m "chore: rewrite site URLs for Cloudflare deploy"
             git push origin cloudflare-deploy --force
           fi
 
