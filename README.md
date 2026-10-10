@@ -54,13 +54,7 @@ AI 助手 skill 支持 Claude Code 和 Codex。装上后直接问「替朋友担
 </td></tr>
 <tr><td align="right"><b>衍生工具</b></td><td align="left">
 
-[howtolivebetter.net](https://howtolivebetter.net/)，[littleben](https://github.com/littleben) 做的打勾清单：加待办、标记做到没有、收藏
-
-[微信小程序版](https://github.com/HuiTurn/HowToLiveBetter)，[HuiTurn](https://github.com/HuiTurn) 做的小程序：分类、收藏、每日一读、全文搜索，离线可用
-
-[高性价比人生指南行动版](https://apps.apple.com/cn/app/id6818596108)，GUGU VITALITY LIMITED 做的 iOS App：左右滑卡片决定做不做，做一次的放进清单，要重复做的设成打卡，离线可用；免费版清单和打卡有数量限制
-
-[高性价比人生指南结构化数据集](https://github.com/sin0317/htlb-dataset)，[sin0317](https://github.com/sin0317) 做的结构化数据：全书条目解析成 JSON、CSV、SQLite，每天自动同步（正文 CC BY 4.0，代码 MIT）
+读者做的网站、App、小程序、浏览器插件和数据集，见[衍生项目](衍生项目.md)
 
 </td></tr>
 </table>
