@@ -321,6 +321,3 @@ A 级只说明「有具体数字、出处可核」，不说明这个数字一定
 
 [![Star History Chart](https://api.star-history.com/svg?repos=FavorPan/HowToLiveBetter&type=Date)](https://star-history.com/#FavorPan/HowToLiveBetter&Date)
 
-## 商务合作
-
-邮箱 [admin@mcyyy.com](mailto:admin@mcyyy.com)
