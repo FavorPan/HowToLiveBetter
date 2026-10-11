@@ -37,7 +37,7 @@ AI 助手 skill 支持 Claude Code 和 Codex。装上后直接问「替朋友担
 </td></tr>
 <tr><td align="right"><b>自查</b></td><td align="left">
 
-[生活自查](https://eternity4719.github.io/HowToLiveBetter/selfcheck.html)：回答几十道是否题，看看书里哪些事你还没做到、先做哪几件
+[生活自查](https://howtolivebetter.favorhub.top/selfcheck.html)：回答几十道是否题，看看书里哪些事你还没做到、先做哪几件
 
 </td></tr>
 <tr><td align="right"><b>长文</b></td><td align="left">
