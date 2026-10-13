@@ -372,6 +372,14 @@ abbr.term:hover{border-bottom-color:var(--brand-1);color:var(--brand-1)}
       <li>看病：怎么少花钱少走弯路：分级诊疗与转诊、起付线连续计算、报销比例差、预留号源、异地就医、病历留存</li>
       <li>人走了以后要办什么：殡葬基础项目清单、价格违法、中介备案、公积金余额与社保待遇、死者个人信息权利</li>
       <li>做一个网站或平台：支付结算红线、ICP 许可与备案、直播与视听资质、平台核验与涉税报送、内容治理、实名、未成年人、通知删除、数据出境、服务器选型</li>
+      <li>怀孕和生产：叶酸与建册产检、破水处置、无痛分娩、剖宫产指征、生育保险、出生医学证明、新生儿筛查、参保与落户</li>
+      <li>别为了外形把身体搞坏：极端节食与进食障碍、医美两证、面部填充失明部位、违法减肥药、正畸当面复诊</li>
+      <li>遭遇重大打击之后：丧亲、重病诊断、失业、丧偶、哀伤就医、12356 与 12355、应激期不做不可逆决定</li>
+      <li>上学以后的孩子：按小时算的急症、被欺凌处置、每天户外 2 小时、抑郁筛查、治愈近视骗局、散瞳验光、窝沟封闭、别送戒网瘾学校</li>
+      <li>十八岁之后有哪几条路：十二条路法定门槛、当兵入伍、特岗教师、军队文职、自考成考、公费师范定向医学生、出国打工、创业担保贷款、骑手保障</li>
+      <li>出国留学：身份、打工、保险和回国认证：认证院校、居留与宽限期、打工时数上限、留学预警、OSHC、留服认证</li>
+      <li>残疾之后怎么活：精神障碍住院原则、照护者健康、治愈系骗局、办证待遇、康复救助、无障碍改造、残保金、行为能力与监护</li>
+      <li>家里的常备药别吃出事：对乙酰氨基酚别吃重复、儿童退烧禁忌、布洛芬胃损伤、2 岁以下不喂复方感冒药、奥美拉唑限期、感冒不用抗生素、头孢酒精禁忌</li>
     </ol>
   </div>
 </noscript>
@@ -964,6 +972,7 @@ function gotoItem(key, fromId){
   if (!el) return;
   if (!el.offsetParent){            // 目标被筛选藏起来了，先把筛选清掉再跳
     state.q = ''; for (const d of DIMS) state[d].clear();
+    state.dispute = false; state.todo = false;
     syncControls(); apply(); writeUrl();
   }
   // 把「从哪跳的」写进当前这条历史记录，再推一条新的，这样浏览器后退键和鼠标侧键
@@ -1148,7 +1157,10 @@ function writeUrl(){
   for (const d of DIMS) if (state[d].size) p.set(d, [...state[d]].join(','));
   if (state.dispute) p.set('dispute','1'); if (state.todo) p.set('todo','1');
   if (PERF.on) p.set('perf','1');
-  const qs = p.toString(); history.replaceState(null, '', (qs ? '?'+qs : location.pathname) + location.hash);
+  const qs = p.toString();
+  const hash = location.hash;
+  const validHash = hash && document.getElementById(hash.slice(1))?.offsetParent ? hash : '';
+  history.replaceState(history.state, '', (qs ? '?'+qs : location.pathname) + validHash);
 }
 function syncControls(){
   document.getElementById('q').value = state.q;
@@ -1269,6 +1281,7 @@ function wire(){
   document.getElementById('reset').addEventListener('click', reset);
   document.getElementById('reset2').addEventListener('click', reset);
   document.addEventListener('keydown', e => {
+    if (!DM.mask.hidden || !TIP.hidden) return;
     if (e.key === '/' && !/INPUT|TEXTAREA/.test(document.activeElement.tagName)) { e.preventDefault(); document.getElementById('q').focus(); }
     if (e.key === 'Escape') { if (document.activeElement.id === 'q') document.activeElement.blur(); setMenu(false); }
   });
