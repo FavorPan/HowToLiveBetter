@@ -146,7 +146,11 @@
       const msg = (j && typeof j.message === 'string' && j.message) || '出了点问题，稍后再试。';
       if (res.status === 429) {
         add('sys', (j && typeof j.message === 'string' && j.message) || '今天在这个网络的免费次数用完了，明天早上 8 点后再来。');
-        setQuota({ remaining: 0 });
+        // 只有日配额用完才把显示清零；并发 429（reason=concurrent）时次数其实还在，
+        // 清零会让双开标签页的读者误以为「还能问 0 次」（终审 M3）。
+        const reason = j && j.reason;
+        const isDaily = reason === 'daily' || (reason === undefined && /次数用完了/.test(msg));
+        if (isDaily) setQuota({ remaining: 0 });
       } else if (j && j.type === 'answer') {
         addAnswer(j.answer, j.cites);
         setQuota({ remaining: j.remaining });

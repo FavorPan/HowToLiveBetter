@@ -12,6 +12,14 @@ export function pickOrigin(request) {
   return null;
 }
 
+// 服务端 Origin 闸（终审 I1）：浏览器跨站请求必带 Origin 头；缺失（curl、服务端对服务端）放行，
+// 仍受 IP 日配额约束。存在但不在白名单 → 拒。与 pickOrigin 共用同一份白名单。
+export function originAllowed(request) {
+  const o = request.headers.get('origin');
+  if (!o) return true;
+  return pickOrigin(request) !== null;
+}
+
 export function json(data, status = 200, origin = null) {
   const headers = {
     'content-type': 'application/json; charset=utf-8',
