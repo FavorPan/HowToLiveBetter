@@ -3,3 +3,4 @@
 node_modules/
 dist/
 worker/src/corpus.json
+.dev.vars
