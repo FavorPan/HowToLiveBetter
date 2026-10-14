@@ -24,15 +24,17 @@ test('拼 OpenAI 兼容请求并提取 content', async () => {
 
 test('5xx 重试一次后成功', async () => {
   let n = 0;
-  const f = () => { n++; return n < 2 ? new Response('err', { status: 502 }) : okRes(); };
+  const f = mockFetch(() => { n++; return n < 2 ? new Response('err', { status: 502 }) : okRes(); });
   const r = await chatComplete({ messages: [], env, fetchImpl: f });
   assert.equal(r.ok, true);
+  assert.equal(f.calls.length, 2);
 });
 
 test('4xx 不重试直接失败', async () => {
   const f = mockFetch(401);
   const r = await chatComplete({ messages: [], env, fetchImpl: f });
   assert.equal(r.ok, false);
+  assert.equal(f.calls.length, 1);
 });
 
 test('请求带 Authorization 和模型名', async () => {
@@ -50,4 +52,41 @@ test('响应缺 choices 返回失败', async () => {
   const f = () => new Response('{"error":"x"}', { status: 200 });
   const r = await chatComplete({ messages: [], env, fetchImpl: f });
   assert.equal(r.ok, false);
+});
+
+test('外部 signal 已中止时不发请求', async () => {
+  const ac = new AbortController();
+  ac.abort();
+  const f = mockFetch(() => okRes());
+  const r = await chatComplete({ messages: [], env, signal: ac.signal, fetchImpl: f });
+  assert.equal(r.ok, false);
+  assert.equal(r.reason, '请求已中止');
+  assert.equal(f.calls.length, 0);
+});
+
+test('AGNES_BASE_URL 缺失时直接失败', async () => {
+  const badEnv = { AGNES_MODEL: 'm-1', AGNES_API_KEY: 'k' };
+  const f = mockFetch(() => okRes());
+  const r = await chatComplete({ messages: [], env: badEnv, fetchImpl: f });
+  assert.equal(r.ok, false);
+  assert.equal(r.reason, '网关地址未配置');
+  assert.equal(f.calls.length, 0);
+});
+
+test('AGNES_MODEL 缺失时直接失败', async () => {
+  const badEnv = { AGNES_BASE_URL: 'https://x.example/v1', AGNES_API_KEY: 'k' };
+  const f = mockFetch(() => okRes());
+  const r = await chatComplete({ messages: [], env: badEnv, fetchImpl: f });
+  assert.equal(r.ok, false);
+  assert.equal(r.reason, '模型名称未配置');
+  assert.equal(f.calls.length, 0);
+});
+
+test('AGNES_API_KEY 缺失时直接失败', async () => {
+  const badEnv = { AGNES_BASE_URL: 'https://x.example/v1', AGNES_MODEL: 'm-1' };
+  const f = mockFetch(() => okRes());
+  const r = await chatComplete({ messages: [], env: badEnv, fetchImpl: f });
+  assert.equal(r.ok, false);
+  assert.equal(r.reason, 'API 密钥未配置');
+  assert.equal(f.calls.length, 0);
 });

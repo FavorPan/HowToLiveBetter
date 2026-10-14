@@ -4,6 +4,13 @@
 const TIMEOUT_MS = 45_000;
 
 export async function chatComplete({ messages, env, signal, fetchImpl }) {
+  // 外部已中止：不发请求，直接失败。
+  if (signal?.aborted) return { ok: false, reason: '请求已中止' };
+  // env 快速失败：缺任意一项不发请求。
+  if (!env.AGNES_BASE_URL) return { ok: false, reason: '网关地址未配置' };
+  if (!env.AGNES_MODEL) return { ok: false, reason: '模型名称未配置' };
+  if (!env.AGNES_API_KEY) return { ok: false, reason: 'API 密钥未配置' };
+
   const doFetch = fetchImpl || fetch;
   const body = JSON.stringify({
     model: env.AGNES_MODEL,
@@ -19,12 +26,16 @@ export async function chatComplete({ messages, env, signal, fetchImpl }) {
   for (let attempt = 0; attempt < 2; attempt++) {
     const timer = new AbortController();
     const t = setTimeout(() => timer.abort(new Error('timeout')), TIMEOUT_MS);
+    // 超时归终态：超时再重试=读者干等 90 秒，不重试是有意的。
+    const mergedSignal = signal
+      ? AbortSignal.any([timer.signal, signal])
+      : timer.signal;
     try {
       const res = await doFetch(`${env.AGNES_BASE_URL}/chat/completions`, {
         method: 'POST',
         headers,
         body,
-        signal: signal ?? timer.signal,
+        signal: mergedSignal,
       });
       if (res.status >= 500) { lastReason = `上游 ${res.status}`; continue; }
       if (!res.ok) return { ok: false, reason: `上游 ${res.status}` };
