@@ -3,4 +3,3 @@
 node_modules/
 dist/
 worker/src/corpus.json
-worker/src/corpus.json

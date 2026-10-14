@@ -58,3 +58,14 @@ test('来源栏内容不进语料，备注正常保留', () => {
   assert.equal(j.includes('doi'), false);
   assert.equal(c.entries[0].note.includes('黄曲霉毒素是'), true);
 });
+
+test('目录段没有 book/ 文件时 throw', () => {
+  const emptyReadme = `# 高性价比人生指南
+## 目录
+## 正文
+`;
+  assert.throws(
+    () => buildCorpus({ readmeText: emptyReadme, readBookFile: () => '' }),
+    { message: /README 目录段没有解析到任何 book\/ 文件/ },
+  );
+});

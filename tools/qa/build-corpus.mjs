@@ -20,6 +20,7 @@ export function buildCorpus({ readmeText, readBookFile }) {
   const contentsMd = dir ? dir[0].replace(/## 正文/, '') : '';
   const matched = [...(contentsMd || '').matchAll(/\]\((book\/[^)#]+\.md)\)/g)].map(m => m[1]);
   const bookFiles = [...new Set(matched)].sort();
+  if (bookFiles.length === 0) throw new Error('README 目录段没有解析到任何 book/ 文件，README 结构可能变了');
   const entries = [];
   for (const f of bookFiles) {
     let sec = null, secName = '', e = null;
