@@ -35,7 +35,8 @@
   button:disabled { opacity:.5; cursor:default; }
   button.ghost { background:var(--bg-alt); color:var(--t2); }
   .counter { max-width:640px; margin:4px auto 0; font-size:12px; color:var(--t3); text-align:right; }
-  .actions { max-width:640px; margin:0 auto 6px; display:flex; gap:8px; }
+  .actions { max-width:640px; margin:0 auto 6px; display:flex; gap:8px; justify-content:flex-end; }
+  .actions button { padding:6px 12px; font-size:14px; }
 </style>
 </head>
 <body>
@@ -48,7 +49,10 @@
   <div class="sys">问题只从书里找答案，回答附条目出处。这本书没写的问题会直接说没写。</div>
 </main>
 <footer>
-  <div class="actions" id="actions" style="display:none"><button class="ghost" id="stop">停止</button></div>
+  <div class="actions">
+    <button class="ghost" id="reset" disabled>新对话</button>
+    <button class="ghost" id="stop" style="display:none">停止</button>
+  </div>
   <div class="composer">
     <textarea id="q" rows="1" maxlength="500" placeholder="比如：被裁员能拿多少补偿？"></textarea>
     <button id="send">发送</button>
@@ -71,18 +75,27 @@
   const cnt = document.getElementById('cnt');
   const quota = document.getElementById('quota');
   const actions = document.getElementById('actions');
+  const resetBtn = document.getElementById('reset');
   const history = [];
   let busy = false;
   let ctl = null;
 
   const setQuota = r => { if (r && typeof r.remaining === 'number') quota.textContent = '今天还能问 ' + r.remaining + ' 次'; };
+  const refreshQuota = () => fetch(API + '/api/qa/quota').then(r => r.ok ? r.json() : null).then(setQuota).catch(() => {});
+
+  const hasTalk = () => thread.querySelectorAll('.bubble').length > 0;
+  function touch() {
+    resetBtn.disabled = !hasTalk();
+    const last = thread.lastElementChild;
+    if (last) last.scrollIntoView({ block: 'end' });
+  }
 
   function add(cls, text) {
     const d = document.createElement('div');
     d.className = 'bubble ' + cls;
     d.textContent = text;
     thread.appendChild(d);
-    d.scrollIntoView({ block: 'end' });
+    touch();
     return d;
   }
 
@@ -109,7 +122,7 @@
     note.textContent = 'AI 摘要，以书目原文为准。'; // 固定免责行，有引用没引用都显示
     d.appendChild(note);
     thread.appendChild(d);
-    d.scrollIntoView({ block: 'end' });
+    touch();
   }
 
   async function ask() {
@@ -117,7 +130,7 @@
     if (!question || busy) return;
     busy = true;
     send.disabled = true;
-    actions.style.display = '';
+    stopBtn.style.display = '';
     q.value = '';
     cnt.textContent = '0';
     add('user', question);
@@ -149,16 +162,23 @@
     } finally {
       busy = false;
       send.disabled = false;
-      actions.style.display = 'none';
+      stopBtn.style.display = 'none';
       ctl = null;
     }
   }
 
   stopBtn.onclick = () => ctl && ctl.abort();
   send.onclick = ask;
+  resetBtn.onclick = () => {
+    if (!hasTalk() || !confirm('清空当前对话，开始新对话？')) return;
+    thread.querySelectorAll('.bubble').forEach(b => b.remove());
+    history.length = 0;
+    touch();
+    refreshQuota();
+  };
   q.onkeydown = e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); ask(); } };
   q.oninput = () => { cnt.textContent = String(q.value.length); };
-  fetch(API + '/api/qa/quota').then(r => r.ok ? r.json() : null).then(setQuota).catch(() => {});
+  refreshQuota();
 })();
 </script>
 </body>
