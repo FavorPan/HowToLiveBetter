@@ -118,6 +118,8 @@ Expected: FAIL（找不到模块 tools/qa/build-corpus.mjs）
 
 - [ ] **Step 3: 实现 build-corpus.mjs**
 
+> **实施备注（2026-10-14 审查裁定，已按此实现）：** README 全文有 69 处 book/ 链接（「这本书想回答的问题」表与目录重复引用），下面的 `matchAll` 会把每个文件解析两遍、条目数翻倍。实际实现改为只扫 `## 目录` 到 `## 正文` 之间的段落，去重后按文件名 `.sort()`；目录段解析不到任何 book 文件时 throw（不静默产空 corpus）。该口径与 `readBook()` 的 bookFiles 不完全相同（readBook 另过滤含 index.html 的段），语料构建只认本条备注的口径。
+
 ```js
 // tools/qa/build-corpus.mjs
 // 语料构建：复用 tools/lib/book.mjs 的 read/readBook（README 结构、LF 归一）。
