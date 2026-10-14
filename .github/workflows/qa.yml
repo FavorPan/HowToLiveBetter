@@ -16,6 +16,11 @@ on:
       - 'tools/qa/**'
       - '.github/workflows/qa.yml'
 
+# 同 ref 上只留最新一次运行：两个 main push 挤在一起时，旧语料的部署不能后到（终审 M4）。
+concurrency:
+  group: qa-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -38,7 +43,8 @@ jobs:
         with:
           node-version: 22
       - run: node tools/qa/build-corpus.mjs
-      - run: npx wrangler@4 deploy
+      # 钉死次版本保可复现（终审 M4）：升级 wrangler 时改这一行
+      - run: npx wrangler@4.151.0 deploy
         working-directory: worker
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
