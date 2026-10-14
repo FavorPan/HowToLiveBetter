@@ -1,0 +1,45 @@
+# /agent 问答后端：测试 + Worker 部署。与 book.yml（电子书发布）完全独立，
+# 不进 build 链，语料过期只会让本 workflow 红、不影响 Release。
+name: QA agent
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'worker/**'
+      - 'tools/qa/**'
+      - 'book/**'
+      - 'README.md'
+      - '.github/workflows/qa.yml'
+  pull_request:
+    paths:
+      - 'worker/**'
+      - 'tools/qa/**'
+      - '.github/workflows/qa.yml'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: node tools/qa/build-corpus.mjs
+      - run: node tools/qa/eval.mjs
+      - run: node --test tools/qa/*.test.mjs
+
+  deploy:
+    needs: test
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: node tools/qa/build-corpus.mjs
+      - run: npx wrangler@4 deploy
+        working-directory: worker
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
