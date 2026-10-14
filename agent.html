@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="index,follow">
+<meta name="description" content="对《高性价比人生指南》提问，AI 依据书中条目回答，附条目出处。">
+<title>问一问 · 高性价比人生指南</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%233451b2'/%3E%3Cpath d='M17 33l10 11 20-24' fill='none' stroke='white' stroke-width='7' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<style>
+  :root { --bg:#fff; --bg-alt:#f6f7f9; --t1:#1a1c1e; --t2:#5f6368; --t3:#9aa0a6; --accent:#3451b2; --card:#fff; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg:#17181a; --bg-alt:#1f2124; --t1:#e8eaed; --t2:#9aa0a6; --t3:#5f6368; --accent:#8ab4f8; --card:#1f2124; }
+  }
+  * { box-sizing:border-box; margin:0; }
+  body { background:var(--bg); color:var(--t1); font:16px/1.7 -apple-system,'PingFang SC','Microsoft YaHei',sans-serif; min-height:100vh; display:flex; flex-direction:column; }
+  header { display:flex; align-items:center; gap:12px; padding:14px 20px; border-bottom:1px solid var(--bg-alt); }
+  header a { color:var(--t2); text-decoration:none; font-size:14px; }
+  header a:hover { color:var(--accent); }
+  header .quota { margin-left:auto; font-size:13px; color:var(--t3); }
+  main { flex:1; width:min(760px,100%); margin:0 auto; padding:24px 20px 130px; }
+  .bubble { max-width:640px; margin:0 0 16px; padding:12px 16px; border-radius:12px; white-space:pre-wrap; }
+  .user { background:#3451b2; color:#fff; margin-left:auto; width:fit-content; max-width:80%; }
+  .bot { background:var(--bg-alt); }
+  .bot .note { margin-top:8px; font-size:12px; color:var(--t3); }
+  .chips { margin-top:10px; display:flex; flex-wrap:wrap; gap:6px; }
+  .chip { font-size:13px; color:var(--accent); background:var(--card); border:1px solid var(--bg-alt); border-radius:6px; padding:2px 8px; text-decoration:none; }
+  .chip:hover { border-color:var(--accent); }
+  .sys { text-align:center; color:var(--t3); font-size:13px; margin:8px 0 16px; white-space:normal; }
+  footer { position:fixed; bottom:0; left:0; right:0; background:var(--bg); border-top:1px solid var(--bg-alt); padding:10px 20px 14px; }
+  .composer { max-width:640px; margin:0 auto; display:flex; gap:8px; align-items:flex-end; }
+  textarea { flex:1; resize:none; border:1px solid var(--bg-alt); border-radius:10px; background:var(--card); color:var(--t1); font:inherit; padding:10px 12px; height:52px; max-height:140px; }
+  textarea:focus { outline:1px solid var(--accent); }
+  button { border:0; border-radius:10px; background:var(--accent); color:#fff; padding:10px 16px; font:inherit; cursor:pointer; }
+  button:disabled { opacity:.5; cursor:default; }
+  button.ghost { background:var(--bg-alt); color:var(--t2); }
+  .counter { max-width:640px; margin:4px auto 0; font-size:12px; color:var(--t3); text-align:right; }
+  .actions { max-width:640px; margin:0 auto 6px; display:flex; gap:8px; }
+</style>
+</head>
+<body>
+<header>
+  <a href="./">← 检索页</a>
+  <b>问一问</b>
+  <span class="quota" id="quota"></span>
+</header>
+<main id="thread">
+  <div class="sys">问题只从书里找答案，回答附条目出处。这本书没写的问题会直接说没写。</div>
+</main>
+<footer>
+  <div class="actions" id="actions" style="display:none"><button class="ghost" id="stop">停止</button></div>
+  <div class="composer">
+    <textarea id="q" rows="1" maxlength="500" placeholder="比如：被裁员能拿多少补偿？"></textarea>
+    <button id="send">发送</button>
+  </div>
+  <div class="counter"><span id="cnt">0</span>/500</div>
+</footer>
+<noscript>问答功能需要启用 JavaScript。也可以直接阅读各节内容。</noscript>
+<script>
+(() => {
+  const API = (() => {
+    const h = location.hostname;
+    if (h === '127.0.0.1' || h === 'localhost') return new URLSearchParams(location.search).get('api') || 'http://127.0.0.1:8787';
+    if (h.endsWith('github.io')) return 'https://howtolivebetter.favorhub.top'; // GH Pages 版直连主站 API（Worker CORS 白名单已含 favorpan.github.io）
+    return '';
+  })();
+  const thread = document.getElementById('thread');
+  const q = document.getElementById('q');
+  const send = document.getElementById('send');
+  const stopBtn = document.getElementById('stop');
+  const cnt = document.getElementById('cnt');
+  const quota = document.getElementById('quota');
+  const actions = document.getElementById('actions');
+  const history = [];
+  let busy = false;
+  let ctl = null;
+
+  const setQuota = r => { if (r && typeof r.remaining === 'number') quota.textContent = '今天还能问 ' + r.remaining + ' 次'; };
+
+  function add(cls, text) {
+    const d = document.createElement('div');
+    d.className = 'bubble ' + cls;
+    d.textContent = text;
+    thread.appendChild(d);
+    d.scrollIntoView({ block: 'end' });
+    return d;
+  }
+
+  function addAnswer(text, cites) {
+    const d = document.createElement('div');
+    d.className = 'bubble bot';
+    const body = document.createElement('div');
+    body.textContent = text;
+    d.appendChild(body);
+    if (cites && cites.length) {
+      const box = document.createElement('div');
+      box.className = 'chips';
+      for (const c of cites) {
+        const a = document.createElement('a');
+        a.className = 'chip';
+        a.href = './#e-' + c.sec + '-' + c.num;
+        a.textContent = '第 ' + c.sec + ' 节 · ' + c.title;
+        box.appendChild(a);
+      }
+      d.appendChild(box);
+    }
+    const note = document.createElement('div');
+    note.className = 'note';
+    note.textContent = 'AI 摘要，以书目原文为准。'; // 固定免责行，有引用没引用都显示
+    d.appendChild(note);
+    thread.appendChild(d);
+    d.scrollIntoView({ block: 'end' });
+  }
+
+  async function ask() {
+    const question = q.value.trim();
+    if (!question || busy) return;
+    busy = true;
+    send.disabled = true;
+    actions.style.display = '';
+    q.value = '';
+    cnt.textContent = '0';
+    add('user', question);
+    ctl = new AbortController();
+    try {
+      const res = await fetch(API + '/api/qa/ask', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ question, history }),
+        signal: ctl.signal,
+      });
+      let j = null;
+      try { j = await res.json(); } catch (e) {}
+      const msg = (j && typeof j.message === 'string' && j.message) || '出了点问题，稍后再试。';
+      if (res.status === 429) {
+        add('sys', (j && typeof j.message === 'string' && j.message) || '今天在这个网络的免费次数用完了，明天 8 点后再来。');
+        setQuota({ remaining: 0 });
+      } else if (j && j.type === 'answer') {
+        addAnswer(j.answer, j.cites);
+        setQuota({ remaining: j.remaining });
+        history.push({ q: question, a: String(j.answer).slice(0, 300) });
+      } else if (j && (j.type === 'no_hit' || j.type === 'fail')) {
+        add('sys', msg);
+      } else {
+        add('sys', msg);
+      }
+    } catch (e) {
+      if (e.name !== 'AbortError') add('sys', '网络出了问题，稍后再试。');
+    } finally {
+      busy = false;
+      send.disabled = false;
+      actions.style.display = 'none';
+      ctl = null;
+    }
+  }
+
+  stopBtn.onclick = () => ctl && ctl.abort();
+  send.onclick = ask;
+  q.onkeydown = e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); ask(); } };
+  q.oninput = () => { cnt.textContent = String(q.value.length); };
+  fetch(API + '/api/qa/quota').then(r => r.ok ? r.json() : null).then(setQuota).catch(() => {});
+})();
+</script>
+</body>
+</html>
