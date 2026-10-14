@@ -126,14 +126,14 @@
       const res = await fetch(API + '/api/qa/ask', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ question, history }),
+        body: JSON.stringify({ question, history: history.slice(-3) }), // 与服务端 MAX_HISTORY=3 对齐，正文上限将来调大也不会失守
         signal: ctl.signal,
       });
       let j = null;
       try { j = await res.json(); } catch (e) {}
       const msg = (j && typeof j.message === 'string' && j.message) || '出了点问题，稍后再试。';
       if (res.status === 429) {
-        add('sys', (j && typeof j.message === 'string' && j.message) || '今天在这个网络的免费次数用完了，明天 8 点后再来。');
+        add('sys', (j && typeof j.message === 'string' && j.message) || '今天在这个网络的免费次数用完了，明天早上 8 点后再来。');
         setQuota({ remaining: 0 });
       } else if (j && j.type === 'answer') {
         addAnswer(j.answer, j.cites);

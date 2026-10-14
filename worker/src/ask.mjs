@@ -39,7 +39,7 @@ export async function handleAsk(request, env, deps = {}) {
   try {
     const limit = Math.max(1, parseInt(env.QA_LIMIT_IP ?? '3', 10) || 3);
     const row = await env.DB.prepare('SELECT count FROM usage WHERE day = ?1 AND subject = ?2').bind(day, subject).first();
-    if ((row?.count ?? 0) >= limit) return json({ error: 'rate_limited', message: '今天的次数用完了，明天再来。' }, 429, origin);
+    if ((row?.count ?? 0) >= limit) return json({ error: 'rate_limited', message: '今天在这个网络的免费次数用完了，明天早上 8 点后再来。' }, 429, origin);
 
     const index = deps.index;
     const agnes = deps.agnes ?? ((args) => chatComplete(args));
