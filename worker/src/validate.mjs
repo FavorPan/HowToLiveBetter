@@ -25,16 +25,21 @@ export function parseModelOutput(text, validIds) {
   } catch {
     return { ok: false, reason: 'JSON 解析失败' };
   }
-  if (typeof obj.answer !== 'string' || obj.answer.length === 0) return { ok: false, reason: 'answer 缺失' };
-  if (obj.answer.length > 4000) return { ok: false, reason: 'answer 过长' };
+  if (typeof obj.answer !== 'string') return { ok: false, reason: 'answer 缺失' };
+  const answer = obj.answer.trim();
+  if (answer.length === 0) return { ok: false, reason: 'answer 为空' };
+  if (answer.length > 4000) return { ok: false, reason: 'answer 过长' };
   if (!Array.isArray(obj.cites)) return { ok: false, reason: 'cites 缺失' };
+  const seen = new Set();
   const cites = [];
   for (const c of obj.cites) {
     if (typeof c !== 'string') return { ok: false, reason: 'cites 元素不是字符串' };
     const m = /^(\d+)-(\d+)$/.exec(c);
     if (!m) return { ok: false, reason: 'cites 格式错' };
     if (!validIds.has(c)) return { ok: false, reason: `引用 ${c} 不在本轮条目里` };
+    if (seen.has(c)) continue;
+    seen.add(c);
     cites.push({ sec: +m[1], num: +m[2], id: c });
   }
-  return { ok: true, answer: obj.answer.trim(), cites };
+  return { ok: true, answer, cites };
 }
