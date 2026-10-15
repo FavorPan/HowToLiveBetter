@@ -1,0 +1,13 @@
+CREATE TABLE IF NOT EXISTS usage (
+  day TEXT NOT NULL,
+  subject TEXT NOT NULL,
+  count INTEGER NOT NULL DEFAULT 0,
+  PRIMARY KEY (day, subject)
+);
+CREATE TABLE IF NOT EXISTS usage_log (
+  ts INTEGER NOT NULL,
+  subject TEXT NOT NULL,
+  qchars INTEGER NOT NULL,
+  achars INTEGER NOT NULL,
+  ok INTEGER NOT NULL
+);

@@ -1,0 +1,51 @@
+# /agent 问答后端：测试 + Worker 部署。与 book.yml（电子书发布）完全独立，
+# 不进 build 链，语料过期只会让本 workflow 红、不影响 Release。
+name: QA agent
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'worker/**'
+      - 'tools/qa/**'
+      - 'book/**'
+      - 'README.md'
+      - '.github/workflows/qa.yml'
+  pull_request:
+    paths:
+      - 'worker/**'
+      - 'tools/qa/**'
+      - '.github/workflows/qa.yml'
+
+# 同 ref 上只留最新一次运行：两个 main push 挤在一起时，旧语料的部署不能后到（终审 M4）。
+concurrency:
+  group: qa-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: node tools/qa/build-corpus.mjs
+      - run: node tools/qa/eval.mjs
+      - run: node --test tools/qa/*.test.mjs
+
+  deploy:
+    needs: test
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: node tools/qa/build-corpus.mjs
+      # 钉死次版本保可复现（终审 M4）：升级 wrangler 时改这一行
+      - run: npx wrangler@4.151.0 deploy
+        working-directory: worker
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}

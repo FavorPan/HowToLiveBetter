@@ -1,0 +1,5 @@
+# 复制为 worker/.dev.vars（已 gitignore）供本地 wrangler dev 用
+# 本文件只放 secret。AGNES_BASE_URL、AGNES_MODEL、QA_ENABLED、QA_LIMIT_IP、QA_THRESHOLD
+# 等非敏感 vars 来自 worker/wrangler.toml 的 [vars]，不放这里（台账 R16②）。
+AGNES_API_KEY=在这里贴 Agnes 的 key
+QUOTA_SALT=本地随便一串
