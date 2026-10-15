@@ -10,7 +10,7 @@ const ENTRIES = [
 ];
 const index = buildIndex(ENTRIES);
 // 测试语料只有一条，N=1 时分数偏低，阈值按测试语料校准传 5；
-// 真书语料 buildIndex 后 N=690，默认阈值 12 不适用这里。ask.mjs 走默认值。
+// 真书语料 N 为全书条目数（随上游更新变动，2026-10-14 时为 699），默认阈值 12 不适用这里。ask.mjs 走默认值。
 
 function fakeD1() {
   const counts = new Map();
