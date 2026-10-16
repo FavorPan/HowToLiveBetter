@@ -21,10 +21,22 @@ test('伪造引用（不在本轮条目里）拒绝', () => {
   assert.equal(parseModelOutput('{"answer":"x","cites":["99-9"]}', ids).ok, false);
 });
 
-test('空 cites 视为拒答，合法', () => {
-  const r = parseModelOutput('{"answer":"这本书没写这个问题","cites":[]}', ids);
+test('no_answer=true 放行为显式拒答', () => {
+  const r = parseModelOutput('{"no_answer":true}', ids);
   assert.equal(r.ok, true);
-  assert.deepEqual(r.cites, []);
+  assert.equal(r.noAnswer, true);
+});
+
+test('no_answer 非 true 拒绝', () => {
+  assert.equal(parseModelOutput('{"no_answer":1}', ids).ok, false);
+  assert.equal(parseModelOutput('{"no_answer":false}', ids).ok, false);
+  assert.equal(parseModelOutput('{"no_answer":"是"}', ids).ok, false);
+});
+
+test('空 cites 拒绝：「书里没写」必须走 no_answer 协议', () => {
+  // 旧协议（answer 写没写 + cites []）会让读者为拒答付费，2026-10-16 起按无效输出处理。
+  const r = parseModelOutput('{"answer":"这本书没写这个问题","cites":[]}', ids);
+  assert.equal(r.ok, false);
 });
 
 test('注入话术当普通文本处理：无 JSON 拒绝', () => {

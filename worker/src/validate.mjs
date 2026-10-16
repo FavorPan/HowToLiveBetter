@@ -25,11 +25,18 @@ export function parseModelOutput(text, validIds) {
   } catch {
     return { ok: false, reason: 'JSON 解析失败' };
   }
+  if (obj.no_answer !== undefined) {
+    // 显式拒答协议（prompt 规则 4）：唯一合法的书内无答案出口，answer/cites 都不该有。
+    if (obj.no_answer === true) return { ok: true, noAnswer: true };
+    return { ok: false, reason: 'no_answer 格式错' };
+  }
   if (typeof obj.answer !== 'string') return { ok: false, reason: 'answer 缺失' };
   const answer = obj.answer.trim();
   if (answer.length === 0) return { ok: false, reason: 'answer 为空' };
   if (answer.length > 4000) return { ok: false, reason: 'answer 过长' };
   if (!Array.isArray(obj.cites)) return { ok: false, reason: 'cites 缺失' };
+  // 空引用的回答没有条目原文支撑，一律拒绝（「书里没写」这类输出应走 no_answer，不扣次）。
+  if (obj.cites.length === 0) return { ok: false, reason: 'cites 为空' };
   const seen = new Set();
   const cites = [];
   for (const c of obj.cites) {

@@ -1,6 +1,6 @@
 // worker/src/ask.mjs
 // /api/qa/ask 主流程。扣次语义：模型成功产出带有效引用的回答才扣；
-// no_hit、校验失败兜底、上游报错、客户端中止一律不扣。
+// no_hit、检索命中但模型判书内无答案（no_answer，记 miss）、校验失败兜底、上游报错、客户端中止一律不扣。
 // 先查次后调模型、成功才写 D1——并发下极少量超用可接受，不做预留释放。
 
 import { search } from './retrieval.mjs';
@@ -11,7 +11,7 @@ import { createLimiter, dayKey, tierFor } from './quotas.mjs';
 import { clientIp, ipHash, json, originAllowed } from './util.mjs';
 
 const MAX_BODY = 8 * 1024;
-const RETRY_NOTE = '你上一次的输出不是合法 JSON 或引用无效。重新只输出一个 JSON 对象 {"answer":"...","cites":["节-条"]}，引用只能用给出的条目 id。';
+const RETRY_NOTE = '你上一次的输出不是合法 JSON 或引用无效。重新只输出一个 JSON 对象 {"answer":"...","cites":["节-条"]}，引用只能用给出的条目 id；条目不足以回答就输出 {"no_answer":true}。';
 const defaultLimiter = createLimiter(2); // deps 未传 limiter 时的兜底；生产路径由 index.mjs 传入 isolate 级共享实例
 
 export async function handleAsk(request, env, deps = {}) {
@@ -84,6 +84,12 @@ export async function handleAsk(request, env, deps = {}) {
     if (!parsed.ok) {
       logEvent(ctx, env, day, 'fail', hits.hits[0]?.score ?? null);
       return json({ type: 'fail', message: '生成失败了，等一下再试。' }, 200, origin);
+    }
+    if (parsed.noAnswer) {
+      // 检索命中但条目答不了（prompt 规则 4）：读者不该为「书里没写」付费。
+      // 记 miss 观测行（带 top1）——这档和 no_hit 一样是阈值再标定的输入。
+      logEvent(ctx, env, day, 'miss', hits.hits[0]?.score ?? null);
+      return json({ type: 'no_hit', message: '这本书没写这个问题，可以在检索页搜关键词试试。' }, 200, origin);
     }
 
     const upRow = await env.DB.prepare(

@@ -98,6 +98,31 @@ test('书外问题 no_hit，不调模型不扣次，写一行 qa_events', async 
   assert.equal(e.DB.events[0][1], 'no_hit');
 });
 
+test('检索命中但模型判书内无答案：no_answer 走 no_hit 文案，不扣次，记 miss', async () => {
+  const e = env();
+  const agnes = async () => ({ ok: true, content: '{"no_answer":true}' });
+  const r = await handleAsk(req({ question: '被裁员能拿多少补偿' }), e, { agnes, index, threshold: 5, limiter: createLimiter(2) });
+  const j = await r.json();
+  assert.equal(j.type, 'no_hit');
+  assert.equal(e.DB.logs.length, 0); // 没扣次、没 usage_log
+  await new Promise(r2 => setTimeout(r2, 0));
+  assert.equal(e.DB.events.length, 1);
+  assert.equal(e.DB.events[0][1], 'miss');
+});
+
+test('模型输出「这本书没写」+ 空 cites：校验拒绝、重试后仍拒答则不扣次', async () => {
+  // 旧协议的输出（2026-10-16 前）现在过不了校验；重试后模型改走 no_answer，读者不该被扣次。
+  const e = env();
+  const contents = ['{"answer":"这本书没写这个问题","cites":[]}', '{"no_answer":true}'];
+  let call = 0;
+  const agnes = async () => ({ ok: true, content: contents[call++] ?? '{"no_answer":true}' });
+  const r = await handleAsk(req({ question: '被裁员能拿多少补偿' }), e, { agnes, index, threshold: 5, limiter: createLimiter(2) });
+  const j = await r.json();
+  assert.equal(j.type, 'no_hit');
+  assert.equal(call, 2); // 空引用先吃一次重试
+  assert.equal(e.DB.logs.length, 0);
+});
+
 test('超额 429，且不再调 Agnes', async () => {
   const e = env({ QA_LIMIT_IP: '1' });
   let calls = 0;

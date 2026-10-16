@@ -24,7 +24,8 @@ curl -s https://howtolivebetter.favorhub.top/api/qa/quota
 curl -s -X POST https://howtolivebetter.favorhub.top/api/qa/ask \
   -H 'content-type: application/json' -d '{"question":"被裁员能拿多少补偿"}'
 # 期望 type:"answer" 带 cites；「怎么练钢琴」这类核心书外问题应得 no_hit，
-# 「明天买哪只股票会涨」这种相邻域问题会进模型、由回答自己说「这本书没写」
+# 「明天买哪只股票会涨」「养狗怎么养」这种命中但答不了的会进模型、
+# 由模型输出 {"no_answer":true}，服务端转成 no_hit 文案且不扣次（记 miss 观测行）
 ```
 
 排障：deploy 若报 corpus 相关的打包错误，先查 src/index.mjs 那行

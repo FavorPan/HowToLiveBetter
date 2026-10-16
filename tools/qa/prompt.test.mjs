@@ -10,6 +10,7 @@ test('系统提示词约束书内作答与 JSON 字段', () => {
   assert.equal(msgs[0].content.includes('只能依据'), true);
   assert.equal(msgs[0].content.includes('"answer"'), true);
   assert.equal(msgs[0].content.includes('"cites"'), true);
+  assert.equal(msgs[0].content.includes('"no_answer"'), true); // 显式拒答协议（2026-10-16）
 });
 
 test('条目原文块带 id、节条号与标题', () => {
