@@ -35,8 +35,19 @@
   button:disabled { opacity:.5; cursor:default; }
   button.ghost { background:var(--bg-alt); color:var(--t2); }
   .counter { max-width:640px; margin:4px auto 0; font-size:12px; color:var(--t3); text-align:right; }
-  .actions { max-width:640px; margin:0 auto 6px; display:flex; gap:8px; justify-content:flex-end; }
-  .actions button { padding:6px 12px; font-size:14px; }
+  /* 思考态气泡：三个圆点跳动，回答到位后这个元素被替换成正式回答 */
+  .thinking { display:flex; align-items:center; gap:8px; color:var(--t3); }
+  .thinking .dots { display:inline-flex; gap:4px; }
+  .thinking .dot { width:6px; height:6px; border-radius:50%; background:var(--t3); animation:blink 1.2s infinite ease-in-out; }
+  .thinking .dot:nth-child(2) { animation-delay:.2s; }
+  .thinking .dot:nth-child(3) { animation-delay:.4s; }
+  @keyframes blink { 0%,80%,100% { opacity:.25; } 40% { opacity:1; } }
+  #send { min-width:76px; }
+  #send.stop { background:#d93025; } /* 思考中：红底停止键（暗色下同色，可读） */
+  #send.stop .plane { display:none; }
+  #send.stop .stopbox { display:inline-block; }
+  #send .sq { display:none; width:12px; height:12px; border-radius:2px; background:#fff; }
+  .icon { width:14px; height:14px; vertical-align:-2px; fill:#fff; }
 </style>
 </head>
 <body>
@@ -49,13 +60,13 @@
   <div class="sys">问题只从书里找答案，回答附条目出处。这本书没写的问题会直接说没写。</div>
 </main>
 <footer>
-  <div class="actions">
-    <button class="ghost" id="reset" disabled>新对话</button>
-    <button class="ghost" id="stop" style="display:none">停止</button>
-  </div>
   <div class="composer">
     <textarea id="q" rows="1" maxlength="500" placeholder="比如：被裁员能拿多少补偿？"></textarea>
-    <button id="send">发送</button>
+    <button id="send" title="发送（思考中点击=停止）">
+      <svg class="icon plane" viewBox="0 0 24 24" aria-hidden="true"><path d="M3.4 20.4l17.5-8.4c.8-.4.8-1.5 0-1.9L3.4 1.7c-.7-.3-1.4.2-1.4 1v5.6c0 .5.4.9.8 1l11.4 2.2c.4.1.4.6 0 .7L2.8 11.9c-.4.1-.8.5-.8 1v5.6c0 .7.7 1.2 1.4.9z"/></svg>
+      <span class="sq stopbox"></span>
+    </button>
+    <button class="ghost" id="reset" disabled>新对话</button>
   </div>
   <div class="counter"><span id="cnt">0</span>/500</div>
 </footer>
@@ -71,13 +82,45 @@
   const thread = document.getElementById('thread');
   const q = document.getElementById('q');
   const send = document.getElementById('send');
-  const stopBtn = document.getElementById('stop');
   const cnt = document.getElementById('cnt');
   const quota = document.getElementById('quota');
   const resetBtn = document.getElementById('reset');
   const history = [];
   let busy = false;
   let ctl = null;
+  let thinkEl = null; // 思考态气泡：请求结束时替换成正式内容或移除
+  let cleared = false; // 忙碌中确认了「新对话」：吞掉随后到来的中止提示
+
+  // 思考态：带三个跳动圆点的 bot 气泡，回答回来原地替换，不闪跳
+  function showThinking() {
+    const d = document.createElement('div');
+    d.className = 'bubble bot thinking';
+    const dots = document.createElement('span');
+    dots.className = 'dots';
+    for (let i = 0; i < 3; i++) {
+      const s = document.createElement('span');
+      s.className = 'dot';
+      dots.appendChild(s);
+    }
+    d.appendChild(dots);
+    d.appendChild(document.createTextNode('正在思考…'));
+    thread.appendChild(d);
+    touch();
+    return d;
+  }
+  function endThinking() {
+    if (thinkEl) { thinkEl.remove(); thinkEl = null; }
+  }
+
+  // 忙碌态视觉：发送键变红色停止键（方块图标），新对话按钮停用
+  function setBusy(on) {
+    busy = on;
+    send.classList.toggle('stop', on);
+    send.title = on ? '点击停止生成' : '发送';
+    send.setAttribute('aria-label', on ? '停止生成' : '发送');
+    resetBtn.disabled = on || !hasTalk();
+    send.disabled = false; // 忙碌时它就是停止键，必须可点
+  }
 
   const setQuota = r => { if (r && typeof r.remaining === 'number') quota.textContent = '今天还能问 ' + r.remaining + ' 次'; };
   const refreshQuota = () => fetch(API + '/api/qa/quota').then(r => r.ok ? r.json() : null).then(setQuota).catch(() => {});
@@ -127,12 +170,11 @@
   async function ask() {
     const question = q.value.trim();
     if (!question || busy) return;
-    busy = true;
-    send.disabled = true;
-    stopBtn.style.display = '';
     q.value = '';
     cnt.textContent = '0';
     add('user', question);
+    thinkEl = showThinking();
+    setBusy(true);
     ctl = new AbortController();
     try {
       const res = await fetch(API + '/api/qa/ask', {
@@ -143,6 +185,7 @@
       });
       let j = null;
       try { j = await res.json(); } catch (e) {}
+      endThinking(); // 思考气泡先移除，正式回答接在原位
       const msg = (j && typeof j.message === 'string' && j.message) || '出了点问题，稍后再试。';
       if (res.status === 429) {
         add('sys', (j && typeof j.message === 'string' && j.message) || '今天在这个网络的免费次数用完了，明天早上 8 点后再来。');
@@ -161,21 +204,33 @@
         add('sys', msg);
       }
     } catch (e) {
-      if (e.name !== 'AbortError') add('sys', '网络出了问题，稍后再试。');
+      endThinking();
+      if (e.name === 'AbortError') {
+        // 忙碌中确认过「新对话」的，气泡已清空，不再补一条停止提示
+        if (!cleared) add('sys', '已停止生成。');
+        cleared = false;
+      } else {
+        add('sys', '网络出了问题，稍后再试。');
+      }
     } finally {
-      busy = false;
-      send.disabled = false;
-      stopBtn.style.display = 'none';
       ctl = null;
+      setBusy(false);
     }
   }
 
-  stopBtn.onclick = () => ctl && ctl.abort();
-  send.onclick = ask;
+  // 发送键双职责：空闲时发送，思考中是红色停止键
+  send.onclick = () => { if (busy) { if (ctl) ctl.abort(); } else ask(); };
   resetBtn.onclick = () => {
-    if (!hasTalk() || !confirm('清空当前对话，开始新对话？')) return;
+    if (busy) {
+      if (!confirm('正在生成中，停止并清空当前对话？')) return;
+      cleared = true; // 吞掉中止后本会出现的「已停止生成。」
+      if (ctl) ctl.abort();
+    } else if (!hasTalk() || !confirm('清空当前对话，开始新对话？')) {
+      return;
+    }
     thread.querySelectorAll('.bubble').forEach(b => b.remove());
     history.length = 0;
+    endThinking();
     touch();
     refreshQuota();
   };
