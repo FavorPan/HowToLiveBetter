@@ -8,8 +8,7 @@ route = { pattern = "howtolivebetter.favorhub.top/api/*", zone_name = "favorhub.
 [[d1_databases]]
 binding = "DB"
 database_name = "hltb-qa"
-# wrangler d1 create hltb-qa 后把输出的 database_id 填到这里
-database_id = "REPLACE_AFTER_D1_CREATE"
+database_id = "60f4ef56-9e35-4df7-9959-6cb069dba362"
 
 [vars]
 AGNES_BASE_URL = "https://apihub.agnes-ai.com/v1"
