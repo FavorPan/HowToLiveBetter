@@ -16,7 +16,7 @@ function thresholdFrom(env) {
 }
 
 export default {
-  async fetch(request, env) {
+  async fetch(request, env, ctx) {
     try {
       const origin = pickOrigin(request);
       const url = new URL(request.url);
@@ -24,7 +24,7 @@ export default {
       if (env.QA_ENABLED === '0') return json({ error: 'disabled', message: '问答功能维护中，暂时停用。' }, 503, origin);
 
       if (url.pathname === '/api/qa/ask' && request.method === 'POST') {
-        const deps = { origin, index: _index, limiter: _limiter };
+        const deps = { origin, index: _index, limiter: _limiter, ctx }; // ctx 供观测行 waitUntil 落库
         const th = thresholdFrom(env);
         if (th !== undefined) deps.threshold = th;
         return handleAsk(request, env, deps);

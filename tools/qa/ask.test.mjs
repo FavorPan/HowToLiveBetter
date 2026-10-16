@@ -234,6 +234,33 @@ test('qa_events 写入抛错，no_hit 照样 200', async () => {
   await new Promise(r2 => setTimeout(r2, 0)); // fire-and-forget 的日志路径抛错也不能冒泡成 unhandledRejection
 });
 
+// 线上实测（2026-10-16）：Workers 运行时会掐掉未挂 ctx.waitUntil 的裸 promise，
+// qa_events/usage_log 线上空表。生产契约：ctx 存在时观测任务必须经 waitUntil 注册。
+test('生产路径：no_hit 观测行经 ctx.waitUntil 注册并落账', async () => {
+  const e = env();
+  const tasks = [];
+  const ctx = { waitUntil: p => tasks.push(p) };
+  const opts = { agnes: async () => { throw new Error('不该被调'); }, index, threshold: 5, limiter: createLimiter(2), ctx };
+  const r = await handleAsk(req({ question: '明天买哪只股票会涨' }), e, opts);
+  assert.equal(r.status, 200);
+  assert.equal(tasks.length, 1); // 恰好注册一个观测任务
+  await tasks[0];                // 任务本身要能跑完（假 D1 落账）
+  assert.equal(e.DB.events.length, 1);
+  assert.equal(e.DB.events[0][1], 'no_hit');
+});
+
+test('生产路径：usage_log 经 ctx.waitUntil 注册并落账', async () => {
+  const e = env();
+  const tasks = [];
+  const ctx = { waitUntil: p => tasks.push(p) };
+  const opts = { agnes: agnesOk(), index, threshold: 5, limiter: createLimiter(2), ctx };
+  const r = await handleAsk(req({ question: '被裁员能拿多少补偿' }), e, opts);
+  assert.equal((await r.json()).type, 'answer');
+  assert.equal(tasks.length, 1); // usage_log 一个任务
+  await tasks[0];
+  assert.equal(e.DB.logs.length, 1);
+});
+
 test('usage_log 写入抛错，answer 照样 200', async () => {
   const e = env();
   const orig = e.DB.prepare;

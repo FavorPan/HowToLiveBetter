@@ -16,6 +16,7 @@ const defaultLimiter = createLimiter(2); // deps 未传 limiter 时的兜底；�
 
 export async function handleAsk(request, env, deps = {}) {
   const origin = deps.origin ?? null;
+  const ctx = deps.ctx ?? null; // 观测落库经 ctx.waitUntil（生产由 index.mjs 传入）
   if (env.QA_ENABLED === '0') return json({ error: 'disabled', message: '问答功能维护中，暂时停用。' }, 503, origin);
   if (request.method !== 'POST') return json({ error: 'bad_request', message: '只接受 POST。' }, 400, origin);
 
@@ -55,7 +56,7 @@ export async function handleAsk(request, env, deps = {}) {
     const hits = search(index, question, searchOpts);
     if (hits.type === 'no_hit') {
       // 观测（终审 I4）：不存问题文本，只记当天、类型和 top1 分数，供阈值再标定。best-effort。
-      logEvent(env, day, 'no_hit', hits.hits[0]?.score ?? null);
+      logEvent(ctx, env, day, 'no_hit', hits.hits[0]?.score ?? null);
       return json({ type: 'no_hit', message: '这本书没写这个问题，可以在检索页搜关键词试试。' }, 200, origin);
     }
     const validIds = new Set(hits.hits.map(h => h.entry.id));
@@ -63,7 +64,7 @@ export async function handleAsk(request, env, deps = {}) {
 
     let res = await safeCall(agnes, callArgs());
     if (!res.ok) {
-      logEvent(env, day, 'fail', hits.hits[0]?.score ?? null);
+      logEvent(ctx, env, day, 'fail', hits.hits[0]?.score ?? null);
       return json({ type: 'fail', message: '生成失败了，等一下再试。' }, 200, origin);
     }
     let parsed = parseModelOutput(res.content, validIds);
@@ -73,13 +74,13 @@ export async function handleAsk(request, env, deps = {}) {
       retryArgs.messages.push({ role: 'user', content: RETRY_NOTE });
       res = await safeCall(agnes, retryArgs);
       if (!res.ok) {
-        logEvent(env, day, 'fail', hits.hits[0]?.score ?? null);
+        logEvent(ctx, env, day, 'fail', hits.hits[0]?.score ?? null);
         return json({ type: 'fail', message: '生成失败了，等一下再试。' }, 200, origin);
       }
       parsed = parseModelOutput(res.content, validIds);
     }
     if (!parsed.ok) {
-      logEvent(env, day, 'fail', hits.hits[0]?.score ?? null);
+      logEvent(ctx, env, day, 'fail', hits.hits[0]?.score ?? null);
       return json({ type: 'fail', message: '生成失败了，等一下再试。' }, 200, origin);
     }
 
@@ -87,7 +88,7 @@ export async function handleAsk(request, env, deps = {}) {
       'INSERT INTO usage (day, subject, count) VALUES (?1, ?2, 1) ON CONFLICT (day, subject) DO UPDATE SET count = count + 1 RETURNING count'
     ).bind(day, subject).first();
     // 扣次已发生，日志写失败不能让读者 500（终审 M2）。
-    logUsageOk(env, day, subject, question.length, parsed.answer.length);
+    logUsageOk(ctx, env, day, subject, question.length, parsed.answer.length);
 
     const titles = new Map(hits.hits.map(h => [h.entry.id, h.entry.title]));
     return json({
@@ -103,19 +104,25 @@ export async function handleAsk(request, env, deps = {}) {
 
 // no_hit / fail 观测行（qa_events 表，migration 0002）。绝不存问题文本。
 // 整段 best-effort：D1 抖动不能影响读者拿到的回答。
-function logEvent(env, day, type, top1) {
-  // 不 await：观测行在响应返回后由 Workers 延长执行落库。同步抛错（D1 绑定异常、
-  // 表不存在）也一样吞掉——终审 I4 的铁律：观测绝不改变读者拿到的回答。
+// 落库必须经 ctx.waitUntil：Workers 运行时在响应返回后会掐掉未注册的裸 promise，
+// 线上实测（2026-10-16）qa_events 因此空表。ctx 缺省（单测直调）才退回裸 promise，
+// Node 的事件循环会把它跑完。
+function logEvent(ctx, env, day, type, top1) {
+  // 同步抛错（D1 绑定异常、表不存在）也一样吞掉——终审 I4 的铁律：观测绝不改变读者拿到的回答。
   try {
-    env.DB.prepare('INSERT INTO qa_events (day, type, top1, at) VALUES (?1, ?2, ?3, ?4)')
-      .bind(day, type, top1, new Date().toISOString()).run().catch(() => {});
+    const p = env.DB.prepare('INSERT INTO qa_events (day, type, top1, at) VALUES (?1, ?2, ?3, ?4)')
+      .bind(day, type, top1, new Date().toISOString()).run();
+    if (ctx?.waitUntil) ctx.waitUntil(p);
+    p.catch(() => {});
   } catch { /* 同上 */ }
 }
 
-function logUsageOk(env, day, subject, qchars, achars) {
+function logUsageOk(ctx, env, day, subject, qchars, achars) {
   try {
-    env.DB.prepare('INSERT INTO usage_log (ts, subject, qchars, achars, ok) VALUES (?1, ?2, ?3, ?4, 1)')
-      .bind(Date.now(), subject, qchars, achars).run().catch(() => {});
+    const p = env.DB.prepare('INSERT INTO usage_log (ts, subject, qchars, achars, ok) VALUES (?1, ?2, ?3, ?4, 1)')
+      .bind(Date.now(), subject, qchars, achars).run();
+    if (ctx?.waitUntil) ctx.waitUntil(p);
+    p.catch(() => {});
   } catch { /* 同上（终审 M2） */ }
 }
 
