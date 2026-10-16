@@ -106,12 +106,13 @@ jobs:
             --exclude-dir=.git \
             --include='*.html' --include='*.xml' --include='*.txt' --include='*.md' . \
             | xargs -r perl -pi -e 's{https://eternity4719\.github\.io/HowToLiveBetter}{https://favorpan.github.io/HowToLiveBetter}g'
-          # 「AI 问答」入口和 cloudflare-deploy 同款注入。GitHub Pages 是项目站：
-          # 路径带 /HowToLiveBetter 前缀、不做无扩展名改写，链接要写全
-          # /HowToLiveBetter/agent.html（/agent 在 Pages 上是 404）。
-          # agent.html 自己认 github.io 域名、API 直连 favorhub.top（CORS 白名单已含）。
-          perl -0777 -pi -e 's{(<div class="doc-links">生活自查：.*?</div>\n)}{$1      <div class="doc-links">AI 问答：<a href="/HowToLiveBetter/agent.html">对书里的内容提问，回答附条目出处</a></div>\n} unless /agent\.html/' index.html
-          grep -q 'agent\.html' index.html || { echo '问一问入口注入失败（pages-deploy）'; exit 1; }
+          # 「AI 问答」入口和 cloudflare-deploy 同款（页头 .nav-r 药丸按钮，样式
+          # 说明见那边注释）。链接用相对路径 agent.html：GitHub Pages 是项目站
+          # （路径带 /HowToLiveBetter 前缀、不做无扩展名改写），index.html 在目录
+          # 根，相对路径正好解析成 /HowToLiveBetter/agent.html；agent.html 自己
+          # 认 github.io 域名、API 直连 favorhub.top（CORS 白名单已含）。
+          perl -0777 -pi -e 's|(<div class="nav-r">)|<style>.ask-btn{display:inline-flex;align-items:center;gap:5px;height:34px;padding:0 14px;border-radius:18px;background:var(--brand-soft);color:var(--brand-1);font-size:14px;font-weight:600;text-decoration:none;white-space:nowrap;flex:none}.ask-btn:hover{background:rgba(100,108,255,.24)}\@media (max-width:960px){.ask-btn span{display:none}.ask-btn{padding:0 9px}}</style>$1<a class="ask-btn" href="agent.html" title="对书里的内容提问，回答附条目出处"><svg style="width:15px;height:15px;fill:currentColor" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h16a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H9l-5 4V6a2 2 0 0 1 2-2z"/></svg><span>问一问</span></a>| unless /class="ask-btn"/' index.html
+          grep -q 'class="ask-btn"' index.html || { echo '问一问入口注入失败（pages-deploy）'; exit 1; }
           git add -A
           tree=$(git write-tree)
           remote=$(git rev-parse --verify 'origin/pages-deploy^{tree}' 2>/dev/null || echo none)
@@ -146,9 +147,14 @@ jobs:
           perl -pi -e 's{github\.com/FavorPan/HowToLiveBetter}{github.com/eternity4719/HowToLiveBetter}g if /写明出处/' README.md
           perl -0777 -pi -e 's,<!-- ga:start.*?<!-- ga:end -->\n?,,s; s,\s*<div class="group ad">.*?</div>\s*</aside>,\n</aside>,s; s,/\* 赞赏：侧栏底部一行字.*?#tip-box button:hover\{.*?\}\n,,s; s,\s*<div id="tip-mask" hidden>.*?</div>\s*(<div id="xref-pop"),$1,s; s,/\* ---------- 赞赏码弹窗 ---------- \*/.*?\n(\(async function init\(\)\{),$1,s' index.html
           # 「AI 问答」入口只注入到部署分支的 index.html：main 不改 index.html，
-          # 保住「与上游 merge 永不冲突」的架构。幂等：已有 /agent 链接就跳过。
-          perl -0777 -pi -e 's{(<div class="doc-links">生活自查：.*?</div>\n)}{$1      <div class="doc-links">AI 问答：<a href="/agent">对书里的内容提问，回答附条目出处</a></div>\n} unless /href="\/agent"/' index.html
-          grep -q 'href="/agent"' index.html || { echo '问一问入口注入失败'; exit 1; }
+          # 保住「与上游 merge 永不冲突」的架构。幂等：已有 ask-btn 就跳过。
+          # 入口是页头 .nav-r 里的药丸按钮（2026-10-16 用户要求，doc-links 小字行太
+          # 不显眼）：样式配一段 <style> 注入，颜色走站点 CSS 变量（深浅色自适应，
+          # --brand-soft 底 + --brand-1 字和现有 badge 同款）；≤960px 时收成图标。
+          # 链接用相对路径 agent.html——Cloudflare 根路径和 GitHub Pages 项目路径
+          # 都解析正确。perl 替换串里 @media 要写成 \@media，否则被当数组插值吞掉。
+          perl -0777 -pi -e 's|(<div class="nav-r">)|<style>.ask-btn{display:inline-flex;align-items:center;gap:5px;height:34px;padding:0 14px;border-radius:18px;background:var(--brand-soft);color:var(--brand-1);font-size:14px;font-weight:600;text-decoration:none;white-space:nowrap;flex:none}.ask-btn:hover{background:rgba(100,108,255,.24)}\@media (max-width:960px){.ask-btn span{display:none}.ask-btn{padding:0 9px}}</style>$1<a class="ask-btn" href="agent.html" title="对书里的内容提问，回答附条目出处"><svg style="width:15px;height:15px;fill:currentColor" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h16a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H9l-5 4V6a2 2 0 0 1 2-2z"/></svg><span>问一问</span></a>| unless /class="ask-btn"/' index.html
+          grep -q 'class="ask-btn"' index.html || { echo '问一问入口注入失败'; exit 1; }
           perl -pi -e 'if (/^## (?:赞赏|广告位|商务合作)\s*$/) { $skip = 1 } elsif (/^## /) { $skip = 0 } $_ = "" if $skip' README.md
           rm -rf ads tools/ad-mcyyy.html tools/ad-mcyyy-side.html tools/ad-mcyyy-bg.webp
           if grep -n 'googletagmanager\|mcyyy\|wechat-reward\|赞赏\|tip-open\|tip-mask\|tip-box\|group ad' index.html README.md agent.html; then
