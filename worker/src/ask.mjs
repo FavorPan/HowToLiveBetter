@@ -64,6 +64,8 @@ export async function handleAsk(request, env, deps = {}) {
 
     let res = await safeCall(agnes, callArgs());
     if (!res.ok) {
+      // 诊断用 console（wrangler tail 可见），不带问题文本、不进响应；key 绝不打进日志。
+      console.error(`agnes fail: ${res.reason}`);
       logEvent(ctx, env, day, 'fail', hits.hits[0]?.score ?? null);
       return json({ type: 'fail', message: '生成失败了，等一下再试。' }, 200, origin);
     }
