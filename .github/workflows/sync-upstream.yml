@@ -106,6 +106,12 @@ jobs:
             --exclude-dir=.git \
             --include='*.html' --include='*.xml' --include='*.txt' --include='*.md' . \
             | xargs -r perl -pi -e 's{https://eternity4719\.github\.io/HowToLiveBetter}{https://favorpan.github.io/HowToLiveBetter}g'
+          # 「AI 问答」入口和 cloudflare-deploy 同款注入。GitHub Pages 是项目站：
+          # 路径带 /HowToLiveBetter 前缀、不做无扩展名改写，链接要写全
+          # /HowToLiveBetter/agent.html（/agent 在 Pages 上是 404）。
+          # agent.html 自己认 github.io 域名、API 直连 favorhub.top（CORS 白名单已含）。
+          perl -0777 -pi -e 's{(<div class="doc-links">生活自查：.*?</div>\n)}{$1      <div class="doc-links">AI 问答：<a href="/HowToLiveBetter/agent.html">对书里的内容提问，回答附条目出处</a></div>\n} unless /agent\.html/' index.html
+          grep -q 'agent\.html' index.html || { echo '问一问入口注入失败（pages-deploy）'; exit 1; }
           git add -A
           tree=$(git write-tree)
           remote=$(git rev-parse --verify 'origin/pages-deploy^{tree}' 2>/dev/null || echo none)
