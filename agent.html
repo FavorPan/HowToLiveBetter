@@ -7,33 +7,52 @@
 <meta name="description" content="对《高性价比人生指南》提问，AI 依据书中条目回答，附条目出处。">
 <title>问一问 · 高性价比人生指南</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%233451b2'/%3E%3Cpath d='M17 33l10 11 20-24' fill='none' stroke='white' stroke-width='7' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<script>(function(){try{var s=localStorage.getItem('theme');var d=s?s==='dark':matchMedia('(prefers-color-scheme: dark)').matches;if(d)document.documentElement.classList.add('dark')}catch(e){}})();</script>
 <style>
-  :root { --bg:#fff; --bg-alt:#f6f7f9; --t1:#1a1c1e; --t2:#5f6368; --t3:#9aa0a6; --accent:#3451b2; --card:#fff; }
-  @media (prefers-color-scheme: dark) {
-    :root { --bg:#17181a; --bg-alt:#1f2124; --t1:#e8eaed; --t2:#9aa0a6; --t3:#5f6368; --accent:#8ab4f8; --card:#1f2124; }
-  }
+  /* 配色、字体与 index.html / selfcheck.html 同一套（VitePress 默认主题）；
+     亮暗跟主页开关走：读 localStorage 的 theme 键，没存过跟系统 */
+  :root { --bg:#ffffff; --bg-alt:#f6f6f7; --bg-soft:#f6f6f7; --bg-mute:#f1f1f2; --divider:#e2e2e3;
+    --t1:rgba(60,60,67,1); --t2:rgba(60,60,67,.78); --t3:rgba(60,60,67,.56);
+    --brand-1:#3451b2; --brand-2:#3a5ccc; --brand-soft:rgba(100,108,255,.14);
+    --font:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"PingFang SC","Hiragino Sans GB","Microsoft YaHei","Noto Sans SC",sans-serif;
+    color-scheme:light; }
+  html.dark { --bg:#1b1b1f; --bg-alt:#161618; --bg-soft:#202127; --bg-mute:#2b2b2f; --divider:#2e2e32;
+    --t1:rgba(255,255,245,.86); --t2:rgba(235,235,245,.6); --t3:rgba(235,235,245,.38);
+    --brand-1:#a8b1ff; --brand-2:#5c73e7; --brand-soft:rgba(100,108,255,.16);
+    color-scheme:dark; }
   * { box-sizing:border-box; margin:0; }
-  body { background:var(--bg); color:var(--t1); font:16px/1.7 -apple-system,'PingFang SC','Microsoft YaHei',sans-serif; min-height:100vh; display:flex; flex-direction:column; }
-  header { display:flex; align-items:center; gap:12px; padding:14px 20px; border-bottom:1px solid var(--bg-alt); }
-  header a { color:var(--t2); text-decoration:none; font-size:14px; }
-  header a:hover { color:var(--accent); }
-  header .quota { margin-left:auto; font-size:13px; color:var(--t3); }
+  body { background:var(--bg); color:var(--t1); font:15px/1.75 var(--font); -webkit-font-smoothing:antialiased; min-height:100vh; display:flex; flex-direction:column; }
+  a { color:var(--brand-1); text-decoration:none; }
+  a:hover { color:var(--brand-2); }
+  button { font:inherit; color:inherit; background:none; border:0; padding:0; cursor:pointer; }
+  :focus-visible { outline:2px solid var(--brand-1); outline-offset:2px; border-radius:4px; }
+  /* 页头与 selfcheck.html 同款布局：站名靠左，右侧配额 + 回检索页 */
+  .nav { position:sticky; top:0; z-index:10; height:56px; background:var(--bg); border-bottom:1px solid var(--divider); display:flex; align-items:center; gap:12px; padding:0 24px; }
+  .nav .title { font-weight:600; font-size:16px; color:var(--t1); }
+  .nav .title:hover { color:var(--t1); text-decoration:none; }
+  .nav .sp { flex:1; }
+  .nav .quota { font-size:13px; color:var(--t3); }
+  .nav .back { font-size:14px; font-weight:500; }
   main { flex:1; width:min(760px,100%); margin:0 auto; padding:24px 20px 130px; }
   .bubble { max-width:640px; margin:0 0 16px; padding:12px 16px; border-radius:12px; white-space:pre-wrap; }
-  .user { background:#3451b2; color:#fff; margin-left:auto; width:fit-content; max-width:80%; }
-  .bot { background:var(--bg-alt); }
+  .user { background:var(--brand-1); color:#fff; margin-left:auto; width:fit-content; max-width:80%; }
+  html.dark .user { color:#1b1b1f; }
+  .bot { background:var(--bg-soft); }
   .bot .note { margin-top:8px; font-size:12px; color:var(--t3); }
   .chips { margin-top:10px; display:flex; flex-wrap:wrap; gap:6px; }
-  .chip { font-size:13px; color:var(--accent); background:var(--card); border:1px solid var(--bg-alt); border-radius:6px; padding:2px 8px; text-decoration:none; }
-  .chip:hover { border-color:var(--accent); }
+  .chip { font-size:13px; color:var(--brand-1); background:var(--bg-mute); border:1px solid var(--divider); border-radius:6px; padding:2px 8px; text-decoration:none; }
+  .chip:hover { border-color:var(--brand-1); color:var(--brand-1); text-decoration:none; }
   .sys { text-align:center; color:var(--t3); font-size:13px; margin:8px 0 16px; white-space:normal; }
-  footer { position:fixed; bottom:0; left:0; right:0; background:var(--bg); border-top:1px solid var(--bg-alt); padding:10px 20px 14px; }
+  footer { position:fixed; bottom:0; left:0; right:0; background:var(--bg); border-top:1px solid var(--divider); padding:10px 20px 14px; }
   .composer { max-width:640px; margin:0 auto; display:flex; gap:8px; align-items:flex-end; }
-  textarea { flex:1; resize:none; border:1px solid var(--bg-alt); border-radius:10px; background:var(--card); color:var(--t1); font:inherit; padding:10px 12px; height:52px; max-height:140px; }
-  textarea:focus { outline:1px solid var(--accent); }
-  button { border:0; border-radius:10px; background:var(--accent); color:#fff; padding:10px 16px; font:inherit; cursor:pointer; }
-  button:disabled { opacity:.5; cursor:default; }
-  button.ghost { background:var(--bg-alt); color:var(--t2); }
+  textarea { flex:1; resize:none; border:1px solid var(--divider); border-radius:10px; background:var(--bg-alt); color:var(--t1); font:inherit; padding:10px 12px; height:52px; max-height:140px; }
+  textarea:focus { outline:0; border-color:var(--brand-1); background:var(--bg); }
+  .composer button { border-radius:10px; background:var(--brand-1); color:#fff; padding:10px 16px; transition:background .2s; }
+  .composer button:hover { background:var(--brand-2); }
+  .composer button:disabled { opacity:.5; cursor:default; }
+  .composer button.ghost { background:var(--bg-mute); color:var(--t1); }
+  .composer button.ghost:hover { background:var(--divider); }
+  html.dark .composer button:not(.ghost) { color:#1b1b1f; }
   .counter { max-width:640px; margin:4px auto 0; font-size:12px; color:var(--t3); text-align:right; }
   /* 思考态气泡：三个圆点跳动，回答到位后这个元素被替换成正式回答 */
   .thinking { display:flex; align-items:center; gap:8px; color:var(--t3); }
@@ -43,18 +62,19 @@
   .thinking .dot:nth-child(3) { animation-delay:.4s; }
   @keyframes blink { 0%,80%,100% { opacity:.25; } 40% { opacity:1; } }
   #send { min-width:76px; }
-  #send.stop { background:#d93025; } /* 思考中：红底停止键（暗色下同色，可读） */
+  #send.stop { background:#d93025; color:#fff; } /* 思考中：红底停止键，图标白色两种主题都可读 */
   #send.stop .plane { display:none; }
   #send.stop .stopbox { display:inline-block; }
-  #send .sq { display:none; width:12px; height:12px; border-radius:2px; background:#fff; }
-  .icon { width:14px; height:14px; vertical-align:-2px; fill:#fff; }
+  #send .sq { display:none; width:12px; height:12px; border-radius:2px; background:currentColor; }
+  .icon { width:14px; height:14px; vertical-align:-2px; fill:currentColor; }
 </style>
 </head>
 <body>
-<header>
-  <a href="./">← 检索页</a>
-  <b>问一问</b>
+<header class="nav">
+  <a class="title" href="./">高性价比人生指南</a>
+  <span class="sp"></span>
   <span class="quota" id="quota"></span>
+  <a class="back" href="./">回检索页</a>
 </header>
 <main id="thread">
   <div class="sys">问题只从书里找答案，回答附条目出处。这本书没写的问题会直接说没写。</div>
