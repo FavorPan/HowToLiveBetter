@@ -438,7 +438,7 @@ function renderOut(){
     + `  性价比${e.ratio}，证据 ${e.grade} 级，${PILES.find(p => p.will === e.will)?.name ?? ''}${e.dispute ? '，有争议（先看原条目的备注）' : ''}\n`
     + `  要花的：${plain(e.cost)}\n`
     + (e.note ? `  适用条件与注意事项：${plain(e.note)}\n` : '')
-    + `  https://eternity4719.github.io/HowToLiveBetter/#e-${e.sec}-${e.n}`).join('\n\n');
+    + `  https://favorpan.github.io/HowToLiveBetter/#e-${e.sec}-${e.n}`).join('\n\n');
   document.getElementById('done').innerHTML = yes.map(q =>
     `<li><a href="./#e-${q.entry.sec}-${q.entry.n}">${esc(plain(q.entry.title))}</a></li>`).join('');
   document.getElementById('done-h').hidden = !yes.length;
